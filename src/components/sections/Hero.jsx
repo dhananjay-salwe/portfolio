@@ -4,9 +4,9 @@ import resumePdf from '../../assets/resume.pdf';
 
 const Hero = () => {
   const highlights = [
-    'Trainee Software Developer at aPLS Web Development',
-    'Built systems serving 200+ users',
-    '15-30 FPS face recognition with anti-spoofing'
+    // 'Trainee Software Developer at aPLS Web Development',
+    // 'Built systems serving 200+ users',
+    // '15-30 FPS face recognition with anti-spoofing'
   ];
 
   const containerVariants = {
