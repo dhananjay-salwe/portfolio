@@ -1,0 +1,390 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --text: #425166;
+  --text-h: #0f1f33;
+  --bg: #f4f8ff;
+  --border: #d4dde8;
+  --code-bg: #e8effa;
+  --accent: #0f766e;
+  --accent-bg: rgba(15, 118, 110, 0.12);
+  --accent-border: rgba(15, 118, 110, 0.4);
+  --social-bg: rgba(232, 239, 250, 0.75);
+  --shadow:
+    rgba(12, 25, 48, 0.12) 0 16px 26px -14px,
+    rgba(12, 25, 48, 0.08) 0 8px 14px -8px;
+
+  --sans: 'Manrope', 'Trebuchet MS', sans-serif;
+  --heading: 'Sora', 'Avenir Next', sans-serif;
+  --mono: 'JetBrains Mono', 'Cascadia Mono', monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #b4c0d4;
+    --text-h: #f1f5ff;
+    --bg: #061023;
+    --border: #23344f;
+    --code-bg: #0d1d36;
+    --accent: #2dd4bf;
+    --accent-bg: rgba(45, 212, 191, 0.18);
+    --accent-border: rgba(45, 212, 191, 0.45);
+    --social-bg: rgba(13, 29, 54, 0.72);
+    --shadow:
+      rgba(2, 8, 20, 0.72) 0 18px 30px -16px,
+      rgba(2, 8, 20, 0.56) 0 10px 16px -10px;
+  }
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1000px 500px at 110% -10%, rgba(13, 148, 136, 0.2), transparent 60%),
+    radial-gradient(800px 440px at -10% 20%, rgba(14, 165, 233, 0.15), transparent 65%),
+    var(--bg);
+}
+
+#root {
+  max-width: 100%;
+  margin: 0;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--heading);
+  color: var(--text-h);
+  margin: 0;
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+h5 {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+h6 {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+@media (max-width: 1024px) {
+  h1 {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+}
+
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.dark {
+  --text: #b4c0d4;
+  --text-h: #f1f5ff;
+  --bg: #061023;
+  --border: #23344f;
+  --code-bg: #0d1d36;
+  --accent: #2dd4bf;
+  --accent-bg: rgba(45, 212, 191, 0.18);
+  --accent-border: rgba(45, 212, 191, 0.45);
+  --social-bg: rgba(13, 29, 54, 0.72);
+  --shadow:
+    rgba(2, 8, 20, 0.72) 0 18px 30px -16px,
+    rgba(2, 8, 20, 0.56) 0 10px 16px -10px;
+}
+
+.light {
+  --text: #425166;
+  --text-h: #0f1f33;
+  --bg: #f4f8ff;
+  --border: #d4dde8;
+  --code-bg: #e8effa;
+  --accent: #0f766e;
+  --accent-bg: rgba(15, 118, 110, 0.12);
+  --accent-border: rgba(15, 118, 110, 0.4);
+  --social-bg: rgba(232, 239, 250, 0.75);
+  --shadow:
+    rgba(12, 25, 48, 0.12) 0 16px 26px -14px,
+    rgba(12, 25, 48, 0.08) 0 8px 14px -8px;
+}
+
+.parallax-atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.parallax-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(36px);
+  opacity: 0.4;
+}
+
+.parallax-orb-1 {
+  width: clamp(280px, 36vw, 520px);
+  height: clamp(280px, 36vw, 520px);
+  right: -140px;
+  top: -80px;
+  background: rgba(14, 165, 233, 0.4);
+  animation: floatOne 18s ease-in-out infinite;
+}
+
+.parallax-orb-2 {
+  width: clamp(260px, 30vw, 460px);
+  height: clamp(260px, 30vw, 460px);
+  left: -120px;
+  bottom: -110px;
+  background: rgba(13, 148, 136, 0.32);
+  animation: floatTwo 20s ease-in-out infinite;
+}
+
+.parallax-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.25;
+}
+
+.parallax-panel {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  overflow: clip;
+  padding: clamp(1rem, 1.6vw, 2rem) clamp(0.6rem, 1.3vw, 1.4rem);
+}
+
+.parallax-panel-inner {
+  position: relative;
+  border-radius: 2rem;
+  border: 1px solid var(--border);
+  background: var(--panel-bg, linear-gradient(150deg, rgba(248, 252, 255, 0.85), rgba(239, 247, 255, 0.78)));
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  will-change: transform;
+}
+
+.parallax-hero {
+  --panel-bg: linear-gradient(155deg, rgba(224, 242, 254, 0.82), rgba(153, 246, 228, 0.68));
+}
+
+.parallax-about {
+  --panel-bg: linear-gradient(155deg, rgba(255, 255, 255, 0.84), rgba(219, 234, 254, 0.7));
+}
+
+.parallax-experience {
+  --panel-bg: linear-gradient(155deg, rgba(221, 247, 255, 0.86), rgba(209, 250, 229, 0.68));
+}
+
+.parallax-projects {
+  --panel-bg: linear-gradient(155deg, rgba(239, 246, 255, 0.86), rgba(224, 231, 255, 0.72));
+}
+
+.parallax-skills {
+  --panel-bg: linear-gradient(155deg, rgba(226, 232, 240, 0.86), rgba(186, 230, 253, 0.68));
+}
+
+.parallax-contact {
+  --panel-bg: linear-gradient(155deg, rgba(240, 253, 250, 0.88), rgba(255, 251, 235, 0.72));
+}
+
+.dark .parallax-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+}
+
+.dark .parallax-hero {
+  --panel-bg: linear-gradient(155deg, rgba(12, 42, 56, 0.88), rgba(15, 23, 42, 0.84));
+}
+
+.dark .parallax-about {
+  --panel-bg: linear-gradient(155deg, rgba(10, 24, 46, 0.9), rgba(20, 36, 62, 0.84));
+}
+
+.dark .parallax-experience {
+  --panel-bg: linear-gradient(155deg, rgba(7, 32, 43, 0.9), rgba(15, 32, 56, 0.84));
+}
+
+.dark .parallax-projects {
+  --panel-bg: linear-gradient(155deg, rgba(19, 29, 56, 0.9), rgba(27, 44, 73, 0.84));
+}
+
+.dark .parallax-skills {
+  --panel-bg: linear-gradient(155deg, rgba(20, 33, 58, 0.9), rgba(10, 24, 46, 0.84));
+}
+
+.dark .parallax-contact {
+  --panel-bg: linear-gradient(155deg, rgba(10, 44, 50, 0.9), rgba(24, 38, 50, 0.84));
+}
+
+@keyframes floatOne {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-18px, 24px) scale(1.08);
+  }
+}
+
+@keyframes floatTwo {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(22px, -20px) scale(1.06);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--code-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+::selection {
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+@media (max-width: 768px) {
+  :root {
+    font-size: 14px;
+  }
+
+  .parallax-panel {
+    padding-block: 0.8rem;
+    padding-inline: 0.45rem;
+  }
+
+  .parallax-panel-inner {
+    border-radius: 1.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parallax-orb,
+  .parallax-panel-inner {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  .no-print,
+  header,
+  footer,
+  nav {
+    display: none !important;
+  }
+}

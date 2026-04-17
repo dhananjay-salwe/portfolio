@@ -1,0 +1,195 @@
+================================================================================
+CODE REVIEW GRAPH - DEPENDENCY ANALYSIS
+================================================================================
+
+OVERVIEW
+--------------------------------------------------------------------------------
+Total Files Analyzed: 20
+
+FILE STRUCTURE & IMPORTS
+--------------------------------------------------------------------------------
+
+App.jsx
+  Type: root
+  Internal Dependencies (7):
+    → components\layout\Layout.jsx
+    → components\sections\About.jsx
+    → components\sections\Contact.jsx
+    → components\sections\Experience.jsx
+    → components\sections\Hero.jsx
+    → components\sections\Projects.jsx
+    → components\sections\Skills.jsx
+  External Dependencies (1):
+    → react
+
+components\layout\Footer.jsx
+  Type: layout
+  Internal Dependencies (1):
+    → components\ui\Button.jsx
+  External Dependencies (1):
+    → framer-motion
+
+components\layout\Header.jsx
+  Type: layout
+  Internal Dependencies (4):
+    → assets\resume.pdf
+    → components\ui\Button.jsx
+    → components\ui\ThemeToggle.jsx
+    → hooks\useScrollSpy.js
+  External Dependencies (1):
+    → framer-motion
+
+components\layout\Layout.jsx
+  Type: layout
+  Internal Dependencies (2):
+    → components\layout\Footer.jsx
+    → components\layout\Header.jsx
+
+components\sections\About.jsx
+  Type: section
+  Internal Dependencies (3):
+    → assets\resume.pdf
+    → components\ui\Button.jsx
+    → components\ui\Card.jsx
+  External Dependencies (1):
+    → framer-motion
+
+components\sections\Contact.jsx
+  Type: section
+  Internal Dependencies (2):
+    → components\ui\Button.jsx
+    → components\ui\Card.jsx
+  External Dependencies (1):
+    → framer-motion
+
+components\sections\Experience.jsx
+  Type: section
+  Internal Dependencies (3):
+    → components\ui\Badge.jsx
+    → components\ui\Card.jsx
+    → data\experience.js
+  External Dependencies (1):
+    → framer-motion
+
+components\sections\Hero.jsx
+  Type: section
+  Internal Dependencies (2):
+    → assets\resume.pdf
+    → components\ui\Button.jsx
+  External Dependencies (1):
+    → framer-motion
+
+components\sections\Projects.jsx
+  Type: section
+  Internal Dependencies (4):
+    → components\ui\Badge.jsx
+    → components\ui\Button.jsx
+    → components\ui\Card.jsx
+    → data\projects.js
+  External Dependencies (2):
+    → framer-motion
+    → react
+
+components\sections\Skills.jsx
+  Type: section
+  Internal Dependencies (3):
+    → components\ui\Badge.jsx
+    → components\ui\Card.jsx
+    → data\skills.js
+  External Dependencies (1):
+    → framer-motion
+
+components\ui\Badge.jsx
+  Type: ui-component
+  External Dependencies (1):
+    → framer-motion
+
+components\ui\Button.jsx
+  Type: ui-component
+  External Dependencies (2):
+    → framer-motion
+    → react
+
+components\ui\Card.jsx
+  Type: ui-component
+  External Dependencies (2):
+    → framer-motion
+    → react
+
+components\ui\ThemeToggle.jsx
+  Type: ui-component
+  External Dependencies (2):
+    → framer-motion
+    → react
+
+data\experience.js
+  Type: data
+
+data\projects.js
+  Type: data
+
+data\skills.js
+  Type: data
+
+hooks\useScrollSpy.js
+  Type: hook
+  External Dependencies (1):
+    → react
+
+hooks\useTheme.js
+  Type: hook
+  External Dependencies (1):
+    → react
+
+main.jsx
+  Type: root
+  Internal Dependencies (1):
+    → App.jsx
+  External Dependencies (2):
+    → react
+    → react-dom
+
+================================================================================
+DEPENDENCY STATISTICS
+================================================================================
+
+MOST IMPORTED FILES (High Dependency Index):
+  components\ui\Button.jsx: imported by 6 file(s)
+  components\ui\Card.jsx: imported by 5 file(s)
+  assets\resume.pdf: imported by 3 file(s)
+  components\ui\Badge.jsx: imported by 3 file(s)
+  components\sections\Projects.jsx: imported by 1 file(s)
+
+FILES WITH MOST DEPENDENCIES (High Coupling):
+  App.jsx: 7 internal dependencies
+  components\layout\Header.jsx: 4 internal dependencies
+  components\sections\Projects.jsx: 4 internal dependencies
+  components\sections\About.jsx: 3 internal dependencies
+  components\sections\Experience.jsx: 3 internal dependencies
+
+ISOLATED FILES (No internal dependencies): 9
+  components\ui\Badge.jsx
+  components\ui\Button.jsx
+  components\ui\Card.jsx
+  components\ui\ThemeToggle.jsx
+  data\experience.js
+  data\projects.js
+  data\skills.js
+  hooks\useScrollSpy.js
+  hooks\useTheme.js
+
+ENTRY POINTS (Not imported anywhere): 2
+  hooks\useTheme.js
+  main.jsx
+
+================================================================================
+RECOMMENDATIONS FOR CODE REVIEW
+================================================================================
+
+1. HIGH COUPLING DETECTED: App.jsx has 7 dependencies
+   → Consider breaking down this component or extracting shared logic
+
+2. HIGH REUSE DETECTED: components\ui\Button.jsx is imported by 6 files
+   → This is a critical file - ensure it's well-tested and stable
+
+================================================================================

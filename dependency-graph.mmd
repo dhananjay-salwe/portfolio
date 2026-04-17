@@ -1,0 +1,53 @@
+graph TD
+    components\layout\Header_jsx["Header<br/>(layout)"]
+    components\sections\Projects_jsx["Projects<br/>(section)"]
+    components\ui\Card_jsx["Card<br/>(ui-component)"]
+    components\sections\Hero_jsx["Hero<br/>(section)"]
+    components\sections\About_jsx["About<br/>(section)"]
+    hooks\useTheme_js["useTheme<br/>(hook)"]
+    components\sections\Experience_jsx["Experience<br/>(section)"]
+    components\sections\Contact_jsx["Contact<br/>(section)"]
+    components\ui\Badge_jsx["Badge<br/>(ui-component)"]
+    components\layout\Footer_jsx["Footer<br/>(layout)"]
+    components\layout\Layout_jsx["Layout<br/>(layout)"]
+    App_jsx["App<br/>(root)"]
+    components\ui\Button_jsx["Button<br/>(ui-component)"]
+    components\ui\ThemeToggle_jsx["ThemeToggle<br/>(ui-component)"]
+    data\skills_js["skills<br/>(data)"]
+    main_jsx["main<br/>(root)"]
+    components\sections\Skills_jsx["Skills<br/>(section)"]
+    data\experience_js["experience<br/>(data)"]
+    data\projects_js["projects<br/>(data)"]
+    hooks\useScrollSpy_js["useScrollSpy<br/>(hook)"]
+    App_jsx --> components\sections\Projects_jsx
+    App_jsx --> components\sections\Experience_jsx
+    App_jsx --> components\sections\Skills_jsx
+    App_jsx --> components\layout\Layout_jsx
+    App_jsx --> components\sections\Hero_jsx
+    App_jsx --> components\sections\Contact_jsx
+    App_jsx --> components\sections\About_jsx
+    main_jsx --> App_jsx
+    components\layout\Footer_jsx --> components\ui\Button_jsx
+    components\layout\Header_jsx --> components\ui\Button_jsx
+    components\layout\Header_jsx --> hooks\useScrollSpy_js
+    components\layout\Header_jsx --> assets\resume_pdf
+    components\layout\Header_jsx --> components\ui\ThemeToggle_jsx
+    components\layout\Layout_jsx --> components\layout\Header_jsx
+    components\layout\Layout_jsx --> components\layout\Footer_jsx
+    components\sections\About_jsx --> components\ui\Button_jsx
+    components\sections\About_jsx --> assets\resume_pdf
+    components\sections\About_jsx --> components\ui\Card_jsx
+    components\sections\Contact_jsx --> components\ui\Button_jsx
+    components\sections\Contact_jsx --> components\ui\Card_jsx
+    components\sections\Experience_jsx --> components\ui\Card_jsx
+    components\sections\Experience_jsx --> data\experience_js
+    components\sections\Experience_jsx --> components\ui\Badge_jsx
+    components\sections\Hero_jsx --> components\ui\Button_jsx
+    components\sections\Hero_jsx --> assets\resume_pdf
+    components\sections\Projects_jsx --> data\projects_js
+    components\sections\Projects_jsx --> components\ui\Button_jsx
+    components\sections\Projects_jsx --> components\ui\Card_jsx
+    components\sections\Projects_jsx --> components\ui\Badge_jsx
+    components\sections\Skills_jsx --> data\skills_js
+    components\sections\Skills_jsx --> components\ui\Card_jsx
+    components\sections\Skills_jsx --> components\ui\Badge_jsx

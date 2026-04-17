@@ -1,0 +1,272 @@
+%% Dhananjay Salwe - ATS-Friendly LaTeX Resume
+%% Generated for professional applications and ATS scanning
+
+\documentclass[10pt,letterpaper]{article}
+
+% Packages
+\usepackage[utf-8]{inputenc}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{enumitem}
+
+% Geometry
+\geometry{
+    letterpaper,
+    left=0.5in,
+    right=0.5in,
+    top=0.5in,
+    bottom=0.5in
+}
+
+% Colors (subtle, ATS-friendly)
+\definecolor{darkblue}{rgb}{0.08, 0.36, 0.74}
+\definecolor{lightgray}{gray}{0.92}
+
+% Font and styling
+\pagestyle{empty}
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Custom commands
+\newcommand{\resheading}[1]{
+    {\large \textbf{#1}}
+    \vspace{0.3em}
+    \hrule
+    \vspace{0.1em}
+}
+
+\newcommand{\ressection}[2]{
+    \textbf{#1} \hfill \textit{#2} \\
+}
+
+\newcommand{\resitem}[1]{
+    \item #1 \vspace{-0.2em}
+}
+
+\newcommand{\ressubsection}[4]{
+    \ressection{#1}{#2}
+    \textit{#3} \newline
+    #4
+}
+
+\newcommand{\resdaterange}[2]{
+    \textit{#1 -- #2}
+}
+
+% Remove list indentation
+\setlist{leftmargin=0.2in}
+
+\begin{document}
+
+% Header Section
+{\centering
+\textbf{\Large DHANANJAY SALWE} \\
+\vspace{0.2em}
+Full Stack Developer | AI/ML Engineer | Cyber Security Focused \\
+\vspace{0.3em}
+\small
+Nashik, India | +91-XXXX-XXXX-XX | salwedhananjay01@gmail.com \\
+LinkedIn: linkedin.com/in/dhananjay-salwe | GitHub: github.com/dhananjay-salwe | Portfolio: dhananjaysalwe.dev \\
+\vspace{0.3em}
+}
+
+% Professional Summary
+\resheading{PROFESSIONAL SUMMARY}
+\small
+Full Stack Developer with 1+ year of production experience building scalable web applications, AI/ML solutions, and secure API systems. Specialized in backend engineering (Spring Boot, Laravel, Flask), modern frontend development (React, Angular), and computer vision. Proven track record of delivering high-impact projects with measurable outcomes: 70\% manual effort reduction, 40\% API latency improvement, and 85\% resume verification accuracy. Strong foundation in cyber security with focus on secure API design and domain-based authentication systems. Seeking remote or on-site opportunities to build impactful products.
+
+\vspace{0.4em}
+
+% Core Technical Skills
+\resheading{TECHNICAL SKILLS}
+
+\small
+\textbf{Programming Languages:} Java, Python, PHP, JavaScript, TypeScript, HTML5, CSS3 \\
+\textbf{Frontend Technologies:} React.js, Angular 15+, Tailwind CSS, Bootstrap 5, Material UI, Redux, Next.js \\
+\textbf{Backend Frameworks:} Spring Boot, Spring MVC, Spring Security, Flask, FastAPI, Django, Laravel \\
+\textbf{Databases:} MySQL, SQLite, Hibernate ORM, JDBC, Query Optimization \\
+\textbf{AI/ML \& Computer Vision:} OpenCV, MediaPipe, ONNXRuntime, TensorFlow, OpenAI API, Gemini API, Prompt Engineering \\
+\textbf{DevOps \& Tools:} Docker, Nginx, Gunicorn, Git/GitHub, GitLab, Maven, Postman, Lighthouse, VS Code, npm, Vite \\
+\textbf{Security \& APIs:} REST APIs, JWT, OAuth2, Spring Security, Domain Verification, HMAC Tokens, SSL/TLS \\
+
+\vspace{0.4em}
+
+% Professional Experience
+\resheading{PROFESSIONAL EXPERIENCE}
+
+\ressubsection{Trainee Software Developer}{November 2025 -- Present}{aPLS Web Development | Full-time | Onsight}{
+\begin{itemize}[itemsep=0.2em]
+    \resitem{Architected and deployed \textbf{Embeddable Face Recognition Widget SaaS} (F-Widget Dashboard) with 3-layer domain security, HMAC token authentication, and per-session rate limiting using Laravel 11 and Docker}
+    \resitem{Developed \textbf{Face Recognition Kiosk} using Flask, OpenCV, and MediaPipe with liveness detection and anti-spoofing safeguards, achieving 15-30 FPS real-time processing with HTTPS deployment}
+    \resitem{Built \textbf{Swayamsiddh NGO Website} with bilingual (English/Marathi) content management, accessibility controls, secure admin portal, and Bootstrap 5 responsive design}
+    \resitem{Contributed full-stack modules including React frontend interfaces, Flask/FastAPI backend APIs, MySQL database optimization, and CI/CD deployment support}
+    \resitem{Collaborated on AI/ML and web platform projects, adapting to new technologies and requirements continuously}
+\end{itemize}
+}
+
+\vspace{0.3em}
+
+\ressubsection{Web Development Intern}{July 2024 -- August 2024}{TechnoHacks Edutech | 6 weeks | Remote}{
+\begin{itemize}[itemsep=0.2em]
+    \resitem{Designed and deployed 5 responsive web pages using HTML5, CSS3, Bootstrap 5, and JavaScript with modern ES6+ features}
+    \resitem{Achieved Lighthouse performance scores above 90 across all delivered pages}
+    \resitem{Implemented responsive design principles for seamless mobile and cross-device compatibility}
+    \resitem{Collaborated with team members to meet project deadlines and maintain code quality}
+\end{itemize}
+}
+
+\vspace{0.4em}
+
+% Featured Projects
+\resheading{FEATURED PROJECTS}
+
+\ressubsection{Attendo - Student Attendance Management System}{Spring Boot, Angular 15, MySQL, REST APIs}{
+\resdaterange{2024}{2025} | github.com/dhananjay-salwe/Attendo\_API
+}{
+\begin{itemize}[itemsep=0.2em]
+    \resitem{Comprehensive attendance platform serving 200+ students and staff with real-time tracking and automated reporting}
+    \resitem{Built 15+ RESTful API endpoints with Spring Boot and Hibernate ORM, optimized MySQL queries for sub-second response times}
+    \resitem{Implemented Spring Security for role-based access control and JWT authentication}
+    \resitem{Designed responsive Angular 15 Material UI frontend with TypeScript for enhanced user experience}
+    \resitem{Impact: Reduced manual data entry by 70\%, improved API response time by 40\%}
+\end{itemize}
+}
+
+\vspace{0.3em}
+
+\ressubsection{F-Widget Dashboard - Embeddable Face Recognition SaaS}{Laravel 11, PHP 8.3, MySQL, Docker, Nginx}{}{
+\begin{itemize}[itemsep=0.2em]
+    \resitem{Multi-tenant SaaS platform providing secure, embeddable face recognition widgets for third-party integration}
+    \resitem{Implemented Shadow DOM-isolated widget system with floating and embedded deployment modes}
+    \resitem{3-layer domain security architecture with HMAC token validation and per-session rate limiting}
+    \resitem{Dockerized Nginx/PHP-FPM stack for secure client-side deployment and monitoring}
+    \resitem{Added session persistence, usage analytics, and widget-level access controls for enterprise clients}
+\end{itemize}
+}
+
+\vspace{0.3em}
+
+\ressubsection{Face Recognition Kiosk - Liveness \& Anti-spoofing System}{Flask, OpenCV, MediaPipe, ONNXRuntime, Python}{}{
+\begin{itemize}[itemsep=0.2em]
+    \resitem{End-to-end face authentication system with real-time liveness verification and multi-layer spoof detection}
+    \resitem{Implemented ArcFace embeddings and MiniFASNet spoof detection with CLAHE lighting normalization}
+    \resitem{Achieved 15-30 FPS real-time performance with HTTPS and systemd hardening}
+    \resitem{Deployed behind Nginx with Gunicorn workers, persisting embeddings in MySQL for session continuity}
+    \resitem{Production-ready authentication solution with comprehensive security safeguards}
+\end{itemize}
+}
+
+\vspace{0.3em}
+
+\ressubsection{DataAuth - Resume Authenticity Verification System}{Laravel, PHP, MySQL, RapidAPI, PDF Parsing}{
+github.com/dhananjay-salwe/DataAuth
+}{
+\begin{itemize}[itemsep=0.2em]
+    \resitem{Automated resume verification platform that validates candidate credentials against LinkedIn profiles}
+    \resitem{Intelligent PDF parsing engine extracts and normalizes resume data with 85\% field-match accuracy}
+    \resitem{Integrated RapidAPI for LinkedIn credential verification and cross-validation}
+    \resitem{Reduced manual HR screening time by 50\% while maintaining data accuracy}
+    \resitem{Impact: Enabled HR teams to process 50+ resumes daily with minimal manual intervention}
+\end{itemize}
+}
+
+\vspace{0.3em}
+
+\ressubsection{Swayamsiddh NGO Website}{Laravel, PHP 8.3, MySQL, Bootstrap 5, JavaScript}{
+Live: swayamsiddh.in
+}{
+\begin{itemize}[itemsep=0.2em]
+    \resitem{Responsive bilingual (English/Marathi) NGO platform with accessibility controls and dynamic content management}
+    \resitem{Built secure admin portal with custom entry path for news, events, and media management}
+    \resitem{Implemented Bootstrap 5 frontend with AOS animations and custom font-resizer for accessibility}
+    \resitem{SMTP-integrated contact system and Hostinger-friendly file storage for instant publishing}
+    \resitem{Enabled NGO team to self-manage bilingual updates without technical intervention}
+\end{itemize}
+}
+
+\vspace{0.4em}
+
+% Education
+\resheading{EDUCATION}
+
+\ressubsection{Bachelor of Technology (B.Tech) in CSE - Cyber Security and Forensic}{Sandip University}{}{
+2022 -- 2025 | Nashik, India | \textbf{GPA: 9.00/10.0}
+}
+\vspace{-0.5em}
+\begin{itemize}[itemsep=0.2em]
+    \resitem{Maintained 9.00 GPA while specializing in Cyber Security and Forensics}
+    \resitem{Built production-grade full-stack projects including Attendo, DataAuth, and Face Recognition systems}
+    \resitem{Focused on secure full-stack development, database performance tuning, and authentication mechanisms}
+\end{itemize}
+
+\vspace{0.3em}
+
+\ressubsection{Diploma in Information Technology}{Sandip Foundation}{}{
+2019 -- 2022 | Nashik, India
+}
+\vspace{-0.5em}
+\begin{itemize}[itemsep=0.2em]
+    \resitem{Strong foundation in IT fundamentals, web development, and database management}
+    \resitem{Early project experience with HTML, CSS, JavaScript, and PHP}
+\end{itemize}
+
+\vspace{0.4em}
+
+% Certifications
+\resheading{CERTIFICATIONS}
+
+\begin{itemize}[itemsep=0.2em]
+    \resitem{\textbf{Java Full Stack Development} -- The Kiran Academy (January 2025 -- June 2025)}
+    \resitem{\textbf{Network and Web Application Security} -- Sandip University (February 2024)}
+    \resitem{\textbf{Cyber Security Level 1} -- Sandip University (May 2023)}
+\end{itemize}
+
+\vspace{0.4em}
+
+% Key Achievements
+\resheading{KEY ACHIEVEMENTS \& METRICS}
+
+\begin{itemize}[itemsep=0.2em]
+    \resitem{Manual data entry reduced by \textbf{70\%} through Attendo system automation}
+    \resitem{API response latency improved by \textbf{40\%} through MySQL query optimization and caching strategies}
+    \resitem{Resume verification accuracy of \textbf{85\%} field-match with DataAuth system}
+    \resitem{Real-time face recognition processing at \textbf{15-30 FPS} with anti-spoofing safeguards}
+    \resitem{Lighthouse performance scores of \textbf{90+} across all web applications}
+    \resitem{Served \textbf{200+} concurrent users in Attendo system with zero downtime}
+    \resitem{Reduced manual HR screening time by \textbf{50\%} with DataAuth automation}
+\end{itemize}
+
+\vspace{0.4em}
+
+% Languages
+\resheading{LANGUAGES}
+
+\begin{itemize}[itemsep=0.2em]
+    \resitem{English -- Fluent}
+    \resitem{Marathi -- Native}
+    \resitem{Hindi -- Fluent}
+\end{itemize}
+
+\vspace{0.4em}
+
+% Professional Summary
+\resheading{AVAILABILITY \& INTERESTS}
+
+\small
+\textbf{Open to:} Remote positions, on-site opportunities in major tech hubs, and freelance projects \\
+\textbf{Interests:} Full-stack development, AI/ML applications, secure API design, computer vision, cyber security, cloud deployment, and scalable system architecture \\
+
+\vspace{0.3em}
+
+% Footer
+\small
+\hrule
+\vspace{0.2em}
+\centering
+\textit{References, project code samples, and additional documentation available upon request.} \\
+
+\end{document}

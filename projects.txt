@@ -1,0 +1,1358 @@
+
+
+1. Project: F-Widget / face-widget-dashboard
+A multi-tenant Laravel 11 SaaS platform that lets dashboard users create embeddable face recognition widgets for their own websites.
+
+Widget management (CRUD)
+Each widget has: name, mode (floating/embedded), position, primary color, button color, welcome title, welcome message, button text, request limit, allowed domains, allowed pages, active status, and a show_start_button toggle (manual click vs auto-start camera).
+Two embed modes
+Floating mode injects a fixed-position card anywhere on the page. Embedded mode requires a <div id="face-widget-container"> placement div and injects inline. Both use Shadow DOM isolation so the widget CSS never leaks into or from the host page.
+Domain security (3-layer)
+First, WidgetController::script() checks the request's Origin/Referer against the widget's allowed domains list. Second, initWidget() issues a short-lived HMAC token (10-minute TTL, signed with APP_KEY) that the widget must attach to every track-hit request. Third, DomainController::findVerifiedDomain() checks that the domain has been ownership-verified before allowing the widget to fully initialise on production.
+Domain verification
+Dashboard users add their domains and can verify ownership three ways: meta tag verification (checks a custom URL or homepage for <meta name="face-widget-verify" content="token">), DNS TXT record verification, or Force Verify (dev bypass that marks it verified instantly without HTTP checks).
+Usage tracking (success-only)
+api_hits is incremented only when result.final === true && result.face_id — meaning a real face was recognised. Page loads, refreshes, failed scans, and camera errors never count. Rate limited at 10 requests per minute per widget_id + session_id to prevent replay attacks.
+Session persistence
+Each widget generates a SESSION_ID via crypto.randomUUID() stored in localStorage under key fw_session_{widget_id}. This persists across page refreshes so the same browser session doesn't generate duplicate hits.
+Camera start modes
+show_start_button (set per widget in the dashboard) controls whether the widget shows a clickable Start button or auto-starts the camera 1.5 seconds after load. The live preview in the create/edit form reflects this in real time — the button dims and strikethroughs in auto-start mode.
+Reset API
+window.FaceWidget.reset() is exposed as a global on the host page. Calling it stops scanning, stops the camera, resets all state and the usage flag, then either re-enables the button (button mode) or restarts the camera after 800ms (auto-start mode). Customers copy the reset snippet from the widget's show page.
+Face API integration
+The external EC2 face recognition API URL is configured via FACE_API_URL in .env and injected into serve.blade.php through WidgetController::serveScript(). Widget calls init_register() then sends base64 JPEG frames to process_frame() at 800ms intervals. Results include status, final, face_id, and stop_sending flags.
+Recognition result delivery
+On successful recognition the widget fires both window.dispatchEvent(new CustomEvent('faceWidgetRecognized', ...)) and window.postMessage({ type: 'FACE_RECOGNITION_COMPLETE', faceId }) so host pages can listen either way and act on the face ID (e.g. fill a hidden form field).
+Local/dev bypass
+Requests from localhost, 127.x.x.x, .test, .local, and file:// origins automatically skip all domain verification and token checks so development works without registering domains.
+Docker production setup
+12 files generated for containerised deployment: Nginx config, PHP-FPM, docker-compose.yml, Dockerfile, environment handling, and health checks.
+Pending before production
+Remove the Force Verify button from the domains UI, run full end-to-end domain verification on a real public domain, and verify the track-hit endpoint works correctly with the live EC2 URL.
+
+
+================================================================
+F-WIDGET / FACE WIDGET DASHBOARD
+Tools & Technologies Reference
+Multi-tenant Laravel SaaS — Embeddable Face Recognition Widgets
+================================================================
+
+
+----------------------------------------------------------------
+ BACKEND STACK
+----------------------------------------------------------------
+
+Technology           Version      Role
+-----------          -------      ----
+Laravel              11.x         Core PHP framework — routing, middleware, Eloquent ORM
+PHP                  8.3          Server-side runtime
+MySQL                8.x          Relational database — widgets, domains, usage tracking
+Eloquent ORM         Built-in     FaceWidget and Domain models with UUID primary keys
+Laravel RateLimiter  Built-in     Rate limiting — 10 req/min per widget + session
+HMAC SHA-256         Built-in     Short-lived widget tokens (10-min TTL) signed with APP_KEY
+Http Facade          Built-in     Outbound HTTP for domain meta/DNS ownership verification
+Laravel Logging      Built-in     Structured logs for security blocks, hits, errors
+
+
+----------------------------------------------------------------
+ FRONTEND & WIDGET JAVASCRIPT
+----------------------------------------------------------------
+
+Technology              Usage
+----------              -----
+Shadow DOM              Full CSS/JS isolation — widget never leaks styles into host page
+Vanilla JavaScript      serve.blade.php widget script — zero framework on customer pages
+MediaDevices API        Camera access via getUserMedia() for live face capture
+Canvas API              captureFrame() — draws video frame, exports as JPEG blob
+Web Crypto API          crypto.randomUUID() for SESSION_ID with Math.random() fallback
+localStorage            Persists SESSION_ID across refreshes (key: fw_session_{widget_id})
+postMessage API         Delivers FACE_RECOGNITION_COMPLETE event to host page cross-origin
+CustomEvent API         faceWidgetRecognized event dispatched on window for same-page use
+Fetch API               All API calls — initWidget, processFrame, track-hit
+jQuery (CDN)            Auto-loaded by dashboard for AJAX delete and admin interactions
+
+
+----------------------------------------------------------------
+ SECURITY ARCHITECTURE
+----------------------------------------------------------------
+
+Layer                 Mechanism                  Detail
+-----                 ---------                  ------
+Domain allowlist      Origin / Referer check      Configured per widget; blocked = jsError()
+Page lock             Referer path matching       Optional path-level restriction per widget
+Domain ownership      Meta tag / DNS TXT          DomainController verifies before widget loads
+Widget token          HMAC-SHA256 (10 min TTL)    Issued at init, required on every track-hit
+Rate limiting         Laravel RateLimiter         10 successful scans/min per widget+session
+Dev bypass            isLocalOrigin()             localhost, .test, .local, 127.x auto-skip all
+CSRF protection       @csrf / Laravel default     All POST/DELETE dashboard routes protected
+
+
+----------------------------------------------------------------
+ EXTERNAL FACE RECOGNITION API
+----------------------------------------------------------------
+
+Hosted on AWS EC2. URL configured via FACE_API_URL in .env —
+injected into serve.blade.php through WidgetController::serveScript().
+Never hardcoded in views.
+
+Endpoint                         Method   Purpose
+--------                         ------   -------
+/faceapi/api/init_register       POST     Initialise recognition session with client_id
+/faceapi/api/process_frame       POST     Send base64 JPEG frame, receive recognition result
+
+Response fields:
+  status        — human-readable status string
+  final         — true when recognition attempt is complete
+  face_id       — recognised identity (null if not recognised)
+  stop_sending  — true to halt frame loop
+  progress      — percentage 0–100
+
+
+----------------------------------------------------------------
+ KEY CONFIGURATION
+----------------------------------------------------------------
+
+Variable                  Where         Purpose
+--------                  -----         -------
+APP_URL                   .env          Base URL for widget script src and API callbacks
+APP_KEY                   .env          Signs HMAC widget tokens
+FACE_API_URL              .env          External face recognition EC2 endpoint
+DB_HOST / DB_DATABASE     .env          MySQL connection details
+show_start_button         DB column     Per-widget: manual button vs auto-start camera (1.5s)
+allowed_domains           DB column     Newline-separated domain allowlist per widget
+allowed_pages             DB column     Optional path-level page lock per widget
+api_limit                 DB column     Maximum API calls allowed for this widget
+api_hits                  DB column     Running count — incremented on successful recognition only
+
+
+----------------------------------------------------------------
+ DEVELOPER TOOLING
+----------------------------------------------------------------
+
+Tool               Purpose
+----               -------
+Laragon            Local Windows dev environment — Laravel + MySQL + .test TLD
+Laravel Artisan    php artisan migrate, config:clear, route:list
+Ignition           Laravel error pages with full stack traces in development
+Docker             Production containerisation — Nginx, PHP-FPM, docker-compose (12 files)
+Git                Version control
+Blade Templates    Server-side view rendering — all dashboard and widget views
+Tailwind CSS       Utility classes in dashboard layout (loaded via CDN)
+CSS Custom Props   --bg-elevated, --accent, --text-primary etc — dark/light mode support
+
+
+----------------------------------------------------------------
+ PUBLIC WIDGET API SURFACE
+----------------------------------------------------------------
+
+These are the integration points available to customers
+embedding the widget on their pages.
+
+API                                    Type          Description
+---                                    ----          -----------
+window.FaceWidget.reset()              JS global     Resets widget, stops camera, restarts per mode
+faceWidgetRecognized (CustomEvent)     JS event      Fired on window with { faceId } on success
+FACE_RECOGNITION_COMPLETE              postMessage   Cross-origin result: { faceId, timestamp }
+FACE_WIDGET_RESET                      postMessage   Host page can send this to trigger reset
+/api/widget/init                       POST route    Domain gate + HMAC token issuance
+/widget/{id}/script                    GET route     Serves widget JS as application/javascript
+/widget/{id}/track-hit                 POST route    Increments api_hits — success only
+
+
+----------------------------------------------------------------
+ DATABASE TABLES
+----------------------------------------------------------------
+
+face_widgets
+  id                  UUID (primary)
+  name                Widget display name
+  mode                floating | embedded
+  position            top-right | bottom-right | etc
+  theme_color         Hex color string
+  button_color        Hex color string
+  button_text         String
+  welcome_title       String
+  welcome_message     String
+  show_start_button   Boolean (default true)
+  allowed_domains     Text (newline-separated)
+  allowed_pages       Text (newline-separated)
+  api_limit           Integer
+  api_hits            Integer (default 0)
+  is_active           Boolean (default true)
+  created_at / updated_at
+
+domains
+  id                  Auto-increment
+  user_id             Integer (unsignedBigInteger, no FK constraint)
+  domain              VARCHAR 253
+  verification_token  VARCHAR 64 (unique)
+  verified            Boolean (default false)
+  verified_via        VARCHAR 10 (meta | dns | manual | null)
+  created_at / updated_at
+
+
+----------------------------------------------------------------
+ ROUTES SUMMARY
+----------------------------------------------------------------
+
+Dashboard routes (web.php)
+  GET    /widgets                     widgets.index
+  GET    /widgets/create              widgets.create
+  POST   /widgets                     widgets.store
+  GET    /widgets/{widget}            widgets.show
+  GET    /widgets/{widget}/edit       widgets.edit
+  PUT    /widgets/{widget}            widgets.update
+  DELETE /widgets/{widget}            widgets.destroy
+
+  GET    /domains                     domains.index
+  POST   /domains                     domains.store
+  POST   /domains/{domain}/verify/meta  domains.verify.meta
+  POST   /domains/{domain}/verify/dns   domains.verify.dns
+  DELETE /domains/{domain}            domains.destroy
+  POST   /domains/{domain}/force-verify domains.force.verify
+
+Widget API routes
+  GET    /widget/{id}/script          widget.script
+  POST   /api/widget/init             (domain gate + token)
+  POST   /widget/{id}/track-hit       (usage count)
+
+
+================================================================
+F-Widget  |  Laravel 11  |  PHP 8.3  |  MySQL 8  |  face-widget-dashboard.com
+================================================================
+
+
+2. Project Overview
+Project Name: Swayamsiddh Official Website
+
+Live Domain: https://swayamsiddh.in
+
+Organization: Swayamsiddh – Parental Organisation for Intellectually Disabled Children (Chatrapati Sambhajinagar, Maharashtra).
+
+Developed By: aPLS Web Developementelopment
+
+Primary Objective: To provide a modern, accessible, and easily manageable digital platform for the NGO to share their mission, facilities, and latest news with the local community and potential supporters.
+
+Technology Stack
+Backend Framework: Laravel (PHP 8.3)
+
+Frontend Technologies: Blade Templating, HTML5, CSS3, JavaScript
+
+UI Framework: Bootstrap 5
+
+Animations: AOS (Animate On Scroll) Library
+
+Database: MySQL
+
+Authentication: Customized Laravel Breeze
+
+Public-Facing Features (Frontend)
+The user interface is designed with a focus on accessibility and community engagement.
+
+Bilingual Architecture: A seamless language switcher allows users to toggle the entire website interface and content between English and Marathi, storing the preference in the session.
+
+Accessibility Tools: A custom-built, multi-step font resizer (A-, A, A+) allows visually impaired users to scale the text from 70% to 140%. The preference is saved via localStorage so it persists across page loads.
+
+Dynamic News & Events: A dedicated news portal that automatically categorizes posts into "Current Year" and "Past Years."
+
+Responsive UI: Mobile-first design implementation, including a responsive fixed-top navbar and a non-intrusive cookie consent banner engineered to fit all device viewports.
+
+Core Pages: Home, About Us, Facilities, Gallery, and Contact.
+
+Secure Admin Dashboard (Backend)
+The backend is highly locked down to protect the organization's data while providing easy content management tools for the staff.
+
+Secret Portal Entry: Standard login routes are disabled. Administrators must access the dashboard through a custom, hidden URL (/swayam-portal) to mitigate automated brute-force attacks.
+
+News & Event Manager: Full CRUD (Create, Read, Update, Delete) capabilities. Admins can upload photos/videos, write titles and content in both English and Marathi, and even rotate images directly from the dashboard.
+
+Inquiry Management: A dedicated view to read and manage messages submitted through the public Contact form.
+
+Dynamic Contact Details: A module allowing admins to instantly update the school's address, phone numbers, and email on the public-facing site without touching the code.
+
+User Management: Master admins can add or remove secondary admin accounts to control who has access to the dashboard.
+
+Server & Deployment Architecture
+The application is optimized and deployed for a live shared hosting environment.
+
+Hosting Provider: Hostinger
+
+Storage Configuration: Due to shared hosting restrictions blocking traditional symlinks (php artisan storage:link), the filesystem is custom-configured. The public disk maps directly to public/storage, allowing image uploads to bypass security blocks and render instantly on the live site.
+
+Environment: Production mode enabled (APP_ENV=production) with strict error masking to protect backend logic from public view.
+
+Mail Routing: Connected via SMTP to handle automated emails and contact form submissions securely.
+
+
+🛠️ Tools & Technologies Used
+Frontend (Client-Side)
+
+HTML5 & CSS3: For semantic structure and custom styling.
+
+JavaScript (Vanilla): For DOM manipulation, custom accessibility tools (font resizer), and dynamic UI interactions.
+
+Bootstrap 5: For a highly responsive, mobile-first layout and pre-built grid system.
+
+Blade Templating Engine: Laravel’s native templating engine for dynamic content rendering and layout inheritance.
+
+AOS (Animate On Scroll): Lightweight library for smooth scroll animations.
+
+FontAwesome: For scalable vector icons used in the navigation, footer, and feature sections.
+
+Backend (Server-Side)
+
+PHP 8.3: The core server-side scripting language.
+
+Laravel: The primary PHP web application framework used for routing, controllers, and backend logic.
+
+Laravel Breeze: For robust, pre-built authentication scaffolding (customized for the secure /swayam-portal login).
+
+Database & Storage
+
+MySQL: Relational database management system for storing news, events, contact details, and user credentials.
+
+Laravel Eloquent ORM: For secure and efficient database interactions and query building.
+
+Local Filesystem (Hostinger Customized): Configured to handle direct image/media uploads to the public directory, bypassing shared hosting symlink restrictions.
+
+
+3. ================================================================================
+FACE RECOGNITION KIOSK SYSTEM - COMPLETE PROJECT DOCUMENTATION
+================================================================================
+
+PROJECT NAME: Flask Face Recognition & Liveness Detection System
+VERSION: 1.0 (In Development)
+STATUS: 70% Complete - Testing Phase
+AUTHOR: Dhananjay Salwe
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+This is a comprehensive face recognition and anti-spoofing system designed for 
+secure user authentication and identity verification. The system uses advanced 
+AI/ML models to detect live faces, prevent spoofing attacks, and maintain a 
+secure database of registered users.
+
+PURPOSE:
+- User face registration and verification
+- Real-time liveness detection
+- Anti-spoofing (prevent fake videos, photos, screens)
+- Secure face matching and identification
+- Support for various lighting conditions
+
+DEPLOYMENT:
+- Server: Linux (Ubuntu/CentOS)
+- Reverse Proxy: Nginx with HTTPS/SSL
+- Web Framework: Flask (Python)
+- Application Server: Gunicorn
+- Database: MySQL
+- Protocol: REST API
+
+================================================================================
+ TECHNOLOGY STACK
+================================================================================
+
+BACKEND FRAMEWORK:
+- Flask 2.x (Python web framework)
+- Python 3.8+
+- WSGI Application Server: Gunicorn
+
+FACE DETECTION & RECOGNITION:
+- MediaPipe Face Detection (real-time face detection)
+- MediaPipe Face Mesh (468 facial landmarks)
+- ArcFace ONNX Model (face embeddings for matching)
+- MiniFASNet v2 ONNX Model (anti-spoofing liveness detection)
+
+AI/ML LIBRARIES:
+- ONNXRuntime (inference engine for ONNX models)
+- OpenCV (cv2) - Image processing
+- NumPy - Numerical computations
+- MediaPipe - Pose and face detection
+- PyTorch (optional, for custom models)
+
+IMAGE PROCESSING:
+- OpenCV (cv2) - Face detection, enhancement, alignment
+- CLAHE (Contrast Limited Adaptive Histogram Equalization)
+- LAB color space normalization
+- Brightness/lighting analysis and enhancement
+
+DATABASE:
+- MySQL 5.7+ / MariaDB
+- PyMySQL (Python MySQL driver)
+- DictCursor for query results
+- Tables: user_faces (embeddings storage)
+
+WEB SERVER:
+- Nginx (reverse proxy, SSL/HTTPS)
+- Gunicorn (application server)
+- HTTP/2 support
+- Gzip compression
+
+SSL/SECURITY:
+- Let's Encrypt (SSL certificates)
+- TLS 1.2 / TLS 1.3
+- HTTPS encryption (443 port)
+- HTTP → HTTPS redirection
+- Security headers (HSTS, X-Content-Type-Options, etc.)
+
+UTILITIES:
+- Logging (Python built-in logging)
+- Threading (concurrent processing)
+- Thread Pools (ThreadPoolExecutor)
+- Multiprocessing (hardware detection)
+- Collections (deque for history tracking)
+
+================================================================================
+ SYSTEM ARCHITECTURE
+================================================================================
+
+ARCHITECTURE LAYERS:
+
+Layer 1: Web Interface (Frontend)
+  - HTML/CSS/JavaScript
+  - Real-time video capture
+  - User registration forms
+  - Login interface
+  - Liveness detection UI
+
+Layer 2: Web Server (Nginx)
+  - HTTPS encryption/decryption
+  - Reverse proxy to Flask
+  - Static file serving (CSS, JS)
+  - Request routing
+  - Load balancing
+
+Layer 3: Application Server (Gunicorn)
+  - 4 worker processes
+  - Handles Flask requests
+  - WSGI interface
+  - Connection pooling
+
+Layer 4: Flask Application (app.py)
+  - Session management
+  - API endpoints
+  - Request handling
+  - Response generation
+  - User data management
+
+Layer 5: Face Recognition Engine (face_auth.py)
+  - Face detection
+  - Landmark extraction
+  - Liveness detection
+  - Anti-spoofing
+  - Physics-based movement detection
+  - 3D geometry analysis
+
+Layer 6: Face Embedding (face_embedder.py)
+  - ArcFace model inference
+  - Face alignment
+  - Embedding generation
+  - Feature extraction
+
+Layer 7: Database (MySQL)
+  - User information storage
+  - Face embeddings
+  - Login history
+  - User management
+
+WORKFLOW:
+
+        Registration Flow:
+        1. User starts registration
+        2. Video stream captured
+        3. Face detected via MediaPipe
+        4. Liveness detection performed
+        5. 6+ frames analyzed for motion
+        6. Anti-spoof checks applied
+        7. Face aligned with ArcFace
+        8. Embedding generated
+        9. Stored in MySQL database
+        10. User registered successfully
+
+        Login/Verification Flow:
+        1. User starts login
+        2. Video stream captured
+        3. Face detected
+        4. Liveness verified
+        5. Face embedding generated
+        6. Compared against stored embeddings
+        7. Duplicate detection performed
+        8. Match found or not found
+        9. User authenticated or rejected
+
+================================================================================
+ CORE FILES & COMPONENTS
+================================================================================
+
+FILE 1: app.py (Flask Application)
+Purpose: Main Flask application, routing, session management
+Size: ~2900 lines
+Key Functions:
+  - reset_session_data() - Initialize user session
+  - init_login() - Start login session
+  - init_register() - Start registration session
+  - process_frame() - Handle video frame processing
+  - /faceapi/api/process-frame - Process each frame
+  - /api/stats - System statistics
+  - load_stored_faces() - Load registered faces into cache
+Key Features:
+  - Session management with locks (threading)
+  - Face cache (avoid re-detection)
+  - Duplicate detection across sessions
+  - Liveness score tracking
+  - User data validation
+
+FILE 2: face_auth.py (Liveness & Anti-Spoofing Engine)
+Purpose: Face detection, liveness detection, spoof detection
+Size: ~1600 lines
+Key Components:
+  - detect_face() - Find face in frame (MediaPipe)
+  - analyze_lighting() - Analyze brightness conditions
+  - normalize_brightness() - Apply CLAHE normalization
+  - enhance_for_lighting() - Enhance for challenging lighting
+  - check_face_quality() - Validate face quality
+  - extract_landmarks_and_physics() - Get 468 facial landmarks
+  - detect_blinks() - Detect eye blinking
+  - detect_micro_movements() - Detect subtle movements (breathing, tremor)
+  - detect_biological_motion() - Detect natural movement patterns
+  - _detect_photo() - Detect printed photos
+  - _detect_screen() - Detect screen-based spoofs
+  - _detect_replay() - Detect video replay spoofs
+  - detect_3d_geometry() - Analyze 3D depth from 2D
+  - detect_linearity() - Detect if face is 2D/3D
+  - check_spoof_onnx() - MiniFASNet AI spoof detection
+  - check_liveness_production() - Main liveness pipeline
+
+FILE 3: face_embedder.py (Face Embedding Generation)
+Purpose: Generate face embeddings using ArcFace
+Size: ~200 lines
+Key Functions:
+  - load_arcface_model() - Load ONNX model
+  - get_face_embedding() - Generate 512-dim embedding
+  - align_face() - Align face for embedding
+Features:
+  - ONNX model inference
+  - Face alignment
+  - 512-dimensional embeddings
+  - Fast inference
+
+FILE 4: db.py (Database Management)
+Purpose: MySQL database operations
+Size: ~400 lines
+Key Functions:
+  - get_connection() - Get MySQL connection
+  - create_tables() - Create database schema
+  - register_face() - Store new face
+  - get_all_face_embeddings() - Retrieve all embeddings
+  - get_user_by_code() - Get user by face code
+  - find_duplicate() - Find matching faces
+  - save_login_history() - Log login attempts
+  - get_database_stats() - Get DB statistics
+Tables:
+  - user_faces (id, face_code, face_embedding, username, timestamp)
+
+FILE 5: Configuration Files
+
+nginx_config.conf:
+  - Port 80 → 443 redirect (HTTP to HTTPS)
+  - SSL/TLS configuration
+  - Reverse proxy to Flask (127.0.0.1:5000)
+  - Static file serving (/static/)
+  - CORS headers
+  - Security headers
+  - Gzip compression
+  - Request timeouts (120s for video processing)
+
+face-recognition.service (Systemd):
+  - Auto-restart on failure
+  - User: www-data
+  - Workers: 4 (scalable)
+  - Timeout: 120 seconds
+  - Bind: 127.0.0.1:5000
+
+================================================================================
+ KEY TECHNOLOGIES EXPLAINED
+================================================================================
+
+MEDIAPIPE FACE DETECTION:
+- Real-time face detection model
+- Confidence: 0.45 (40% tolerance for harsh lighting)
+- Fast inference on CPU/GPU
+- Returns: Face bounding box, confidence score
+- Used for: Initial face detection
+
+MEDIAPIPE FACE MESH:
+- 468 3D facial landmarks
+- Tracks eyes, nose, mouth, face contours
+- Used for: Liveness detection, movement tracking
+- Confidence: 0.45
+- Indexes: Eye (33, 133, 362, 263), Nose (1), Mouth (13, etc.)
+
+ARCFACE (Face Embedding):
+- ONNX model (face_embedder.onnx)
+- Input: 112x112 RGB image (aligned face)
+- Output: 512-dimensional vector (embedding)
+- Purpose: Face matching and identification
+- Distance metric: Cosine similarity
+- Threshold: 0.4 (duplicate detection)
+
+MINIFASNET V2 (Spoof Detection):
+- ONNX model (MiniFASNetV2.onnx)
+- Input: 80x80 RGB image
+- Output: Probability [Spoof, Live]
+- Purpose: Detect fake videos, photos, screens
+- AI Threshold: < 0.20 is spoof (being adjusted to 0.35)
+- Confidence needed: 0.85+ for high confidence
+
+CLAHE (Brightness Normalization):
+- Algorithm: Contrast Limited Adaptive Histogram Equalization
+- Parameters: clipLimit=2.0, tileGridSize=(8,8)
+- Purpose: Handle harsh/bright lighting
+- LAB Color Space: Process L (lightness) channel
+- Result: Normalized brightness, preserved features
+
+ONNX RUNTIME:
+- Cross-platform ML inference
+- Fast execution on CPU
+- No GPU required
+- Supports multiple backends
+- Thread-safe inference
+
+================================================================================
+ ANTI-SPOOFING & LIVENESS DETECTION
+================================================================================
+
+LIVENESS DETECTION METHODS:
+
+Method 1: Biological Motion Detection
+  - Tracks breathing patterns
+  - Eye movement analysis
+  - Natural head movement
+  - Tremor/micro-movements detection
+
+Method 2: Micro-Movement Analysis
+  - Detects subtle facial movements
+  - Breathing detection (nose movement)
+  - Eye saccades
+  - Facial tremor
+  - Consistency scoring
+
+Method 3: Blink Detection
+  - Eye aspect ratio tracking
+  - Blink counting
+  - Natural blink timing
+  - Minimum 1 blink for acceptance
+
+Method 4: 3D Geometry Analysis
+  - Parallax detection (eye position change)
+  - Yaw estimation (head rotation)
+  - Fisheye ratio (facial distortion)
+  - 3D depth estimation from 2D
+
+Method 5: AI-Based Detection (MiniFASNet)
+  - Neural network classification
+  - Detects unnatural lighting patterns
+  - Identifies flat surfaces (photos, screens)
+  - Confidence scoring
+  - Averaging over 12 frames
+
+SPOOF DETECTION METHODS:
+
+Spoof Type 1: Printed Photos
+  - Glossiness detection
+  - Printer frequency analysis
+  - Paper texture detection
+  - Static edges detection
+  - Confidence: Score > 58, 3+ indicators
+  - AI Detection: 0.85+ confidence required
+
+Spoof Type 2: Screen/Display
+  - Screen glare detection
+  - Moire pattern detection
+  - Pixel grid detection
+  - Display flicker detection
+  - Banding detection
+  - Confidence: Score > 55, 2+ indicators
+
+Spoof Type 3: Video Replay
+  - Compression detection (blockiness)
+  - Smooth motion detection (unnatural)
+  - Periodic motion detection (loops)
+  - Frame repetition detection
+  - Loop detection (13+ frame repeats)
+  - Confidence: Score > 55, 2+ indicators
+
+Spoof Type 4: Surface Analysis
+  - Rigidity detection (flat objects)
+  - Planarity detection (2D vs 3D)
+  - Texture static detection
+  - Translation consistency
+  - Zoom detection (suspicious scaling)
+
+SCORING SYSTEM:
+
+LivenessScorer:
+  - Positive Points: +10 to +40 for live evidence
+  - Negative Points: -150 to -25 for spoof evidence
+  - Final Score: 0-100 range
+  - ACCEPT: Score >= 55 AND live evidence present
+  - REVIEW: Score >= 35 (borderline cases)
+  - REJECT: Score < 35 OR strong spoof evidence
+
+Decisions:
+  - ACCEPT: Confidence >= 55, biological motion present
+  - REVIEW: Needs more analysis (35-54 score)
+  - REJECT: Not enough evidence or spoof detected
+
+================================================================================
+ CURRENT FIXES & ISSUES
+================================================================================
+
+FIX #1: MySQL DictCursor Bug (COMPLETED)
+  - Issue: Using index access on dictionary results
+  - Affected: 5 database functions
+  - Solution: Changed row[0] to row['column_name']
+  - Files: db.py (lines 158, 195-201, 319, 353-358, 410, 416)
+
+FIX #2: Zoom Detection False Positives (COMPLETED)
+  - Issue: Normal head movements detected as zoom
+  - Solution: Increased thresholds
+    - ZOOM_SC_CHANGE: 0.18 → 0.25
+    - ZOOM_SC_CONSIST: 0.72 → 0.78
+    - ZOOM_YAW_SPAN: 0.035 → 0.020
+    - ZOOM_EYE_SPAN: 0.016 → 0.012
+    - ZOOM_FISH_SPAN: 0.007 → 0.005
+
+FIX #3: Blink State Persistence (COMPLETED)
+  - Issue: Blink counter not reset between sessions
+  - Solution: Initialize blink_state in reset_session_data()
+  - File: app.py reset_session_data() function
+
+FIX #4: Missing load_stored_faces() in Register (COMPLETED)
+  - Issue: Duplicate detection not working during registration
+  - Solution: Added load_stored_faces() call in init_register()
+  - File: app.py init_register() function (line ~2506)
+
+FIX #5: Frame Coordinate Mismatch (COMPLETED)
+  - Issue: Spoof check using wrong frame coordinates
+  - Solution: Proper bbox validation in check_spoof_onnx()
+  - File: face_auth.py check_spoof_onnx() function
+
+FIX #6: AI History Initialization (COMPLETED)
+  - Issue: AI history not initialized causing single-frame glitches
+  - Solution: Initialize ai_h deque in reset_session_data()
+  - File: app.py reset_session_data() function
+
+FIX #7: Cryptography Package Missing (COMPLETED)
+  - Issue: PyMySQL needs cryptography for SHA256 auth
+  - Solution: pip install cryptography
+  - Status: ✅ Resolved
+
+FIX #8: Bright Lighting Support (COMPLETED)
+  - Issue: Harsh lighting causing face rejection
+  - Solution: Applied CLAHE brightness normalization
+  - Changes:
+    1. Relaxed brightness threshold (230 → 245)
+    2. Added normalize_brightness() call
+    3. Applied normalization before enhancement
+  - File: face_auth.py lines 1243-1260
+
+CURRENT ISSUE: Spoof False Positives (IN PROGRESS)
+  - Problem: Live users flagged as "Spoof" in bright lighting
+  - Root Cause: CLAHE affects AI model confidence
+  - Solution: Adjust spoof thresholds (0.20 → 0.35)
+  - Alternative: Reduce CLAHE aggressiveness (2.0 → 1.5)
+  - Status: Testing tomorrow
+
+================================================================================
+ CONFIGURATION PARAMETERS
+================================================================================
+
+TIMING PARAMETERS:
+  - GLOBAL_TIMEOUT: 15 seconds (max verification time)
+  - MAX_VERIFY_TIME: 10 seconds (soft limit)
+  - MIN_VERIFY_TIME: 0.5 seconds (must process at least this long)
+  - AI_MIN_ELAPSED: 4 seconds (before using AI data)
+
+FACE DETECTION:
+  - MIN_FACE_SIZE: 70 pixels (minimum face bounding box)
+  - MIN_BRIGHTNESS: 8 (brightness threshold)
+  - MIN_DETECTION_CONFIDENCE: 0.45 (face detection confidence)
+
+MOTION & FRAMES:
+  - REQUIRED_FRAMES: 6 (frames needed for analysis)
+  - MIN_MOTION_THR: 0.0007 (minimum motion threshold)
+  - FRAME_SKIP: 1 (process every frame; 2 = skip every other)
+  - SPOOF_EVERY_N: 2 (run spoof detection every 2nd processed frame)
+
+LIVENESS SCORING:
+  - ACCEPT_SCORE: 55 (minimum for acceptance)
+  - REVIEW_SCORE: 35 (needs more analysis)
+  - EARLY_ACCEPT_SCORE: 80 (high confidence early accept)
+  - AI_MIN_SAMPLES_EARLY_ACCEPT: 3 (need 3 AI samples)
+
+MICRO MOVEMENTS:
+  - MICRO_FRAMES_MIN: 4 (minimum frames for analysis)
+  - MICRO_CONSISTENCY: 0.18 (consistency threshold)
+  - MICRO_VAR_LO: 0.00004 (lower variance bound)
+  - MICRO_VAR_HI: 0.028 (upper variance bound)
+
+3D GEOMETRY:
+  - PARALLAX_THR: 0.0018 (eye position change threshold)
+  - YAW_THR: 0.028 (head rotation threshold)
+  - FISHEYE_THR: 0.0010 (facial distortion threshold)
+  - ASYM_THR: 0.006 (asymmetry threshold)
+
+AI SPOOF MODEL:
+  - AI_HIST_LEN: 12 (frame history length)
+  - AI_AVG_THRESHOLD: 0.05 (averaging window)
+  - AI_MIN_HEURISTICS: 2 (minimum heuristic checks)
+  - SPOOF_THRESHOLD: 0.20 (current, being adjusted to 0.35)
+
+LIGHTING:
+  - OVEREXP_BRIGHT: 228 (overexposure brightness threshold)
+  - OVEREXP_CONTR_MAX: 28 (contrast limit for overexposure)
+  - SIDE_DIFF_THR: 52.0 (side lighting difference)
+  - BACKLIGHT_THR: 24.0 (backlight threshold)
+
+FACE MATCHING:
+  - STRICT_THRESHOLD: 0.52 (face matching threshold)
+  - DUPLICATE_THRESHOLD: 0.40 (duplicate detection threshold)
+  - DIST_USER_THR: 0.15 (distance user threshold)
+
+================================================================================
+ DATABASE SCHEMA
+================================================================================
+
+TABLE: user_faces
+
+Columns:
+  id (INT PRIMARY KEY AUTO_INCREMENT)
+    - Unique identifier for each face record
+    - Auto-incrementing
+    
+  face_code (VARCHAR 255 UNIQUE)
+    - Unique code for face identification
+    - Used for duplicate detection
+    - Format: hash or UUID
+    
+  face_embedding (LONGBLOB)
+    - 512-dimensional ArcFace embedding
+    - Stored as binary data
+    - Used for face matching
+    
+  username (VARCHAR 255)
+    - User's registered name
+    - For display and logging
+    
+  timestamp (DATETIME)
+    - Registration time
+    - Automatic timestamp
+
+Indexes:
+  - PRIMARY KEY on id
+  - UNIQUE on face_code
+
+Operations:
+  - INSERT: Register new face
+  - SELECT: Retrieve all faces for cache
+  - SELECT: Find duplicates by face_code
+  - UPDATE: Update face data
+  - DELETE: Remove face record
+
+================================================================================
+ API ENDPOINTS
+================================================================================
+
+REGISTRATION ENDPOINTS:
+
+POST /faceapi/api/init_register
+  - Purpose: Initialize registration session
+  - Input: {"client_id": "string"}
+  - Output: {"success": true/false}
+  - Session: Creates session with type='register'
+  - Loads: Stored faces for duplicate detection
+
+GET /register
+  - Purpose: Registration page
+  - Input: None
+  - Output: HTML registration page
+  - Features: Video capture, real-time liveness display
+
+LOGIN ENDPOINTS:
+
+POST /faceapi/api/init_login
+  - Purpose: Initialize login session
+  - Input: {"client_id": "string"}
+  - Output: {"success": true/false}
+  - Session: Creates session with type='login'
+  - Loads: Stored faces for matching
+
+GET /login
+  - Purpose: Login page
+  - Input: None
+  - Output: HTML login page
+  - Features: Video capture, user verification
+
+PROCESSING ENDPOINTS:
+
+POST /faceapi/api/process-frame
+  - Purpose: Process video frame for liveness/matching
+  - Input: {"frame": base64_image, "client_id": "string"}
+  - Output: {
+      "is_live": true/false,
+      "message": "status message",
+      "confidence": 0-100
+    }
+  - Processing: Face detection, liveness check, matching
+  - Called: Every frame (~30fps)
+
+SYSTEM ENDPOINTS:
+
+GET /api/stats
+  - Purpose: System statistics
+  - Output: {
+      "total_users": number,
+      "registered_faces": number,
+      "hardware_mode": "desktop/embedded/high_performance",
+      "fps": number
+    }
+
+GET /api/health
+  - Purpose: System health check
+  - Output: {"status": "ok"}
+
+DEBUG ENDPOINTS (Optional):
+
+GET /debug/cache-info
+  - Purpose: Check cache contents
+  - Output: Cache statistics
+
+POST /api/cache-refresh
+  - Purpose: Manually refresh face cache
+  - Output: {"success": true/false}
+
+================================================================================
+ DEPLOYMENT STACK
+================================================================================
+
+DEPLOYMENT SERVERS:
+
+Web Server: Nginx
+  - Listen: Port 443 (HTTPS), Port 80 (HTTP redirect)
+  - Config: /etc/nginx/sites-available/face-recognition
+  - Features:
+    - HTTPS/SSL termination
+    - Reverse proxy to Gunicorn
+    - Static file serving
+    - Gzip compression
+    - Security headers
+    - Load balancing (if multiple backends)
+
+Application Server: Gunicorn
+  - Workers: 4 (configurable)
+  - Bind: 127.0.0.1:5000 (local only, behind Nginx)
+  - Timeout: 120 seconds (face processing)
+  - Worker Type: sync
+  - Reload: Auto-restart on file change (development)
+
+Database: MySQL
+  - Server: localhost:3306 (local) or remote
+  - Database: face_recognition
+  - User: root or dedicated user
+  - Auth: username/password
+  - Charset: utf8mb4
+  - Collation: utf8mb4_unicode_ci
+
+SSL/TLS: Let's Encrypt
+  - Certificate: /etc/letsencrypt/live/your_domain/fullchain.pem
+  - Private Key: /etc/letsencrypt/live/your_domain/privkey.pem
+  - Auto-renewal: certbot timer (monthly)
+  - Protocols: TLSv1.2, TLSv1.3
+
+Firewall:
+  - Port 80: HTTP (redirects to HTTPS)
+  - Port 443: HTTPS (main traffic)
+  - Port 22: SSH (admin access)
+  - Port 3306: MySQL (internal only)
+  - Port 5000: Gunicorn (internal only, behind Nginx)
+
+SERVICE MANAGEMENT:
+
+Start Services:
+  sudo systemctl start nginx
+  sudo systemctl start face-recognition
+
+Stop Services:
+  sudo systemctl stop nginx
+  sudo systemctl stop face-recognition
+
+Restart Services:
+  sudo systemctl restart nginx face-recognition
+
+Enable Auto-start:
+  sudo systemctl enable nginx
+  sudo systemctl enable face-recognition
+
+Check Status:
+  sudo systemctl status nginx
+  sudo systemctl status face-recognition
+
+View Logs:
+  sudo journalctl -u face-recognition -n 50
+  sudo tail -f /var/log/nginx/face_recognition_error.log
+
+================================================================================
+ PERFORMANCE & OPTIMIZATION
+================================================================================
+
+HARDWARE MODES:
+
+Desktop (4+ cores):
+  - Workers: 2-4
+  - Thread pool: 2
+  - Recommended specs:
+    - CPU: Intel i5/i7 or AMD Ryzen 5
+    - RAM: 8GB+
+    - Storage: 256GB SSD
+
+High Performance (4+ cores + GPU):
+  - Workers: 3-4
+  - Thread pool: 3
+  - GPU acceleration: Enabled (if available)
+  - Recommended specs:
+    - CPU: Intel Xeon or AMD EPYC
+    - GPU: NVIDIA (CUDA-capable)
+    - RAM: 16GB+
+    - Storage: 512GB SSD
+
+Embedded (2 cores):
+  - Workers: 1
+  - Thread pool: 1
+  - Lightweight: Minimal threading
+  - Recommended specs:
+    - CPU: ARM (Raspberry Pi 4+)
+    - RAM: 4GB+
+    - Storage: 64GB
+
+OPTIMIZATION TECHNIQUES:
+
+Caching:
+  - Face detection cache (3-frame reuse)
+  - Landmark cache (history buffer)
+  - Stored faces cache (loaded at startup)
+  - Session cache (user-specific)
+
+Frame Skipping:
+  - FRAME_SKIP: 1 (default, process all frames)
+  - Can set to 2 to skip every other frame
+  - Reduces processing load by 50%
+  - Trade-off: Slower detection
+
+Threading:
+  - ThreadPoolExecutor for frame processing
+  - Worker threads: 1-3 (based on hardware)
+  - Lock-free design where possible
+  - Thread-safe deques for history
+
+Compression:
+  - Gzip compression for API responses (70% reduction)
+  - Base64 frame encoding (minimal overhead)
+  - ONNX model quantization (if available)
+
+Expected Performance:
+
+Processing Speeds:
+  - Face Detection: 10-30ms per frame
+  - Landmark Extraction: 15-40ms per frame
+  - Liveness Analysis: 20-50ms per frame
+  - Spoof Detection (AI): 30-80ms per frame
+  - Total: 75-200ms per frame
+
+Throughput:
+  - Frames per second: 15-30 fps (real-time video)
+  - Concurrent users: 2-4 (single server)
+  - API requests: 100-500 req/sec (static content)
+
+Database Performance:
+  - Face lookup: 5-10ms
+  - Embedding comparison: 1-5ms
+  - Duplicate detection: 10-50ms
+  - History logging: 5-10ms
+
+================================================================================
+ SECURITY FEATURES
+================================================================================
+
+AUTHENTICATION & ENCRYPTION:
+
+HTTPS/SSL:
+  - All communication encrypted (TLS 1.2+)
+  - Certificate: Let's Encrypt
+  - Auto-renewal (monthly)
+  - Security headers:
+    - Strict-Transport-Security
+    - X-Content-Type-Options
+    - X-Frame-Options
+    - Referrer-Policy
+
+Database Security:
+  - SHA256 password hashing (MySQL)
+  - Cryptography package for auth
+  - Connection pooling
+  - SQL injection prevention (parameterized queries)
+
+ANTI-SPOOFING:
+
+Multi-Layer Detection:
+  - Heuristic Analysis:
+    - Photo detection (glossiness, printer patterns)
+    - Screen detection (moire, pixel grid, flicker)
+    - Video detection (compression, motion patterns)
+  
+  - AI-Based Detection:
+    - MiniFASNet neural network
+    - Detects unnatural patterns
+    - 12-frame averaging for reliability
+  
+  - Physics-Based Detection:
+    - 3D geometry analysis
+    - Biological motion detection
+    - Facial rigidity detection
+
+Spoof Blocking:
+  - Printed photos: Block (Score > 58, 3+ indicators)
+  - Screen displays: Block (Score > 55, 2+ indicators)
+  - Video replays: Block (Score > 55, 2+ indicators)
+  - Flat surfaces: Block (rigidity test)
+  - AI confidence: Block if < 0.20 (being tuned to 0.35)
+
+FACE DATA PROTECTION:
+
+Storage:
+  - Embeddings stored as binary (not searchable by SQL injection)
+  - Face codes hashed
+  - No original images stored (privacy)
+  - Encrypted backups recommended
+
+Access Control:
+  - Session-based authentication
+  - Client ID validation
+  - Lock-based concurrency control
+  - Timeout protection (15 seconds)
+
+Privacy:
+  - No face images stored permanently
+  - Processed in-memory only
+  - Instant deletion after verification
+  - GDPR-compliant (no raw data retention)
+
+================================================================================
+ TROUBLESHOOTING & COMMON ISSUES
+================================================================================
+
+ISSUE 1: Cryptography Package Missing
+  Symptom: "cryptography package is required for sha256_password"
+  Solution: pip install cryptography
+  Status: ✅ Fixed
+
+ISSUE 2: Face Not Detected in Bright Lighting
+  Symptom: "Face not detected" message despite face in view
+  Solution: Apply CLAHE brightness normalization
+  Fix: Implemented (see FIX #8)
+  Status: ✅ Partially Fixed (tuning spoof sensitivity)
+
+ISSUE 3: Live Users Flagged as Spoof
+  Symptom: Real users rejected with "Spoof Detected by AI"
+  Root Cause: CLAHE normalization affects AI model
+  Solution: Adjust spoof threshold (0.20 → 0.35)
+  Status: 🔄 In Progress - Tomorrow
+
+ISSUE 4: 502 Bad Gateway
+  Symptom: Nginx returns 502 error
+  Causes:
+    - Gunicorn not running
+    - Port 5000 not accessible
+    - Timeout (processing > 120s)
+  Solution:
+    - Check Gunicorn: sudo systemctl status face-recognition
+    - Check port: sudo lsof -i :5000
+    - Increase timeout in Nginx config
+    - Restart: sudo systemctl restart face-recognition
+
+ISSUE 5: Duplicate Not Detected
+  Symptom: Same user registers twice with different face_id
+  Root Cause: load_stored_faces() not called in init_register()
+  Solution: Add function call in registration path
+  Status: ✅ Fixed (FIX #4)
+
+ISSUE 6: MySQL Connection Fails
+  Symptom: "Unable to connect to MySQL"
+  Causes:
+    - MySQL not running
+    - Wrong credentials
+    - Cryptography missing
+  Solution:
+    - Start MySQL: sudo systemctl start mysql
+    - Check credentials in db.py
+    - Install cryptography
+    - Check firewall (port 3306)
+
+ISSUE 7: Zoom Detection False Positives
+  Symptom: Normal head movements detected as zoom
+  Root Cause: Thresholds too strict
+  Solution: Increase zoom thresholds
+  Status: ✅ Fixed (FIX #2)
+
+ISSUE 8: Memory Leaks
+  Symptom: Memory usage grows over time
+  Causes:
+    - Unbounded deques
+    - Session not cleaned up
+  Solution:
+    - Use maxlen in deques (automatic rotation)
+    - Clean up session after timeout
+    - Monitor with: top, free -h
+
+================================================================================
+TESTING & VALIDATION
+================================================================================
+
+TEST SCENARIOS:
+
+Lighting Conditions:
+  - Bright window light: ✅ (needs threshold tuning)
+  - Harsh sunlight: ✅ (works after CLAHE)
+  - Normal room light: ✅ (baseline)
+  - Dark room: ✅ (shows "too dark")
+  - Backlit: ⚠️ (enhanced handling available)
+
+User Types:
+  - New user registration: ✅ (works)
+  - Repeat user login: ✅ (face matching)
+  - Different angle: ✅ (3D geometry handles)
+  - Glasses/beard: ✅ (landmarks work)
+  - Mask/occlusion: ❌ (blocks for safety)
+
+Spoof Scenarios:
+  - Printed photo: ✅ (blocked)
+  - Photo in bright light: ✅ (blocked)
+  - Screen replay: ✅ (blocked)
+  - Video playback: ✅ (blocked)
+  - Phone screen: ✅ (blocked)
+  - Custom video: ✅ (blocked if successful)
+
+Performance Tests:
+  - Single user registration: ~5-15 seconds
+  - Single user login: ~3-10 seconds
+  - Concurrent users: 2-4 simultaneous
+  - CPU usage: 40-80% (single core)
+  - Memory usage: 200-400MB
+  - API response: <200ms average
+
+Validation Checklist:
+  [ ] Face detected correctly (various angles)
+  [ ] Liveness verified (blink, micro-movements)
+  [ ] Spoof blocked (photos, screens, videos)
+  [ ] Duplicate detection (same user)
+  [ ] Different users (face matching)
+  [ ] Database operations (read/write)
+  [ ] Lighting handling (bright, dark, normal)
+  [ ] Performance (response time)
+  [ ] Error handling (invalid input, timeouts)
+  [ ] Security (HTTPS, session validation)
+
+================================================================================
+ FUTURE IMPROVEMENTS & ROADMAP
+================================================================================
+
+SHORT TERM (1-2 weeks):
+  - ✅ Fix spoof false positives (current)
+  - [ ] Add API authentication tokens
+  - [ ] Implement rate limiting
+  - [ ] Add user feedback mechanism
+  - [ ] Improve dark mode detection
+
+MEDIUM TERM (1-2 months):
+  - [ ] Multiple face recognition (family groups)
+  - [ ] Age/gender estimation
+  - [ ] Emotion detection
+  - [ ] Face beautification filters
+  - [ ] Mobile app integration
+  - [ ] Cloud backup of embeddings
+
+LONG TERM (3+ months):
+  - [ ] GPU acceleration (CUDA)
+  - [ ] Distributed system (multiple servers)
+  - [ ] Real-time analytics dashboard
+  - [ ] Advanced anti-spoofing (gait analysis)
+  - [ ] Integration with other systems
+  - [ ] Machine learning model updates
+
+OPTIMIZATION OPPORTUNITIES:
+  - Model quantization (reduce model size)
+  - Batch processing (process multiple faces)
+  - Edge computing (run on devices)
+  - Cache improvements (better face matching)
+  - API optimization (reduce response time)
+
+================================================================================
+17. CONTACT & SUPPORT
+================================================================================
+
+PROJECT LEAD: Dhananjay Salwe
+
+DEPLOYMENT NOTES:
+  - Nginx configuration: /etc/nginx/sites-available/face-recognition
+  - Application logs: /var/log/gunicorn_error.log
+  - Nginx logs: /var/log/nginx/face_recognition_error.log
+  - Database: Check MySQL status regularly
+  - SSL renewal: Automatic via certbot (verify monthly)
+
+MAINTENANCE SCHEDULE:
+  - Daily: Check logs for errors
+  - Weekly: Monitor performance metrics
+  - Monthly: Update dependencies, renew SSL
+  - Quarterly: Full system testing, backup data
+
+QUICK REFERENCE COMMANDS:
+
+Check Service Status:
+  sudo systemctl status nginx face-recognition mysql
+
+View Logs:
+  sudo tail -f /var/log/gunicorn_error.log
+  sudo tail -f /var/log/nginx/face_recognition_error.log
+
+Restart Services:
+  sudo systemctl restart nginx face-recognition
+
+Check Database:
+  mysql -u root -p -e "SHOW DATABASES; USE face_recognition; SELECT COUNT(*) FROM user_faces;"
+
+Monitor Performance:
+  top -p $(pgrep -f gunicorn | tr '\n' ',')
+  watch -n 1 'systemctl status face-recognition | grep Active'
+
+Clear Cache:
+  # Restart application (clears in-memory cache)
+  sudo systemctl restart face-recognition
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+
+Version: 1.0
+Last Updated: Today
+Status: Development (70% Complete)
+Next Update: After spoof detection fix
+
+For questions or issues, contact: Dhananjay Salwe
+
+
+4.Education details : 
+❖ CSE in Cyber Security and Forensic | Sandip University                                        
+B. Tech, Nashik - GPA: 9.00/10 | 2025
+❖ Information Technology                    
+Diploma, Nashik - 71.13 %| 2022  
