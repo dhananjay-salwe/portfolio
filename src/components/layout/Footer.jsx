@@ -161,14 +161,37 @@ const Footer = () => {
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.6 }}
           viewport={{ once: true }}
-          className="py-6 border-t border-[var(--border)] flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0"
+          className="py-6 border-t border-[var(--border)] space-y-4"
         >
-          <p className="text-[var(--text)] text-sm text-center sm:text-left">
-            © {currentYear} Dhananjay Salwe. All rights reserved.
-          </p>
-          {/* <p className="text-[var(--text)] text-xs">
-            Built with React, Vite, Tailwind CSS, and Framer Motion
-          </p> */}
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+            <p className="text-[var(--text)] text-sm text-center sm:text-left">
+              © {currentYear} Dhananjay Salwe. All rights reserved.
+            </p>
+          </div>
+          
+          {/* Policy Links */}
+          <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-sm text-[var(--text)]">
+            <a 
+              href="/#privacy-policy" 
+              className="hover:text-[var(--accent)] hover:underline transition-colors"
+            >
+              Privacy Policy
+            </a>
+            <span className="text-[var(--border)]">•</span>
+            <a 
+              href="/#cookie-policy" 
+              className="hover:text-[var(--accent)] hover:underline transition-colors"
+            >
+              Cookie Policy
+            </a>
+            <span className="text-[var(--border)]">•</span>
+            <a 
+              href="mailto:salwedhananjay01@gmail.com" 
+              className="hover:text-[var(--accent)] hover:underline transition-colors"
+            >
+              Contact
+            </a>
+          </div>
         </motion.div>
       </div>
     </footer>

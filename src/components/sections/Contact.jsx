@@ -2,6 +2,12 @@ import { motion } from 'framer-motion';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
+// TODO: Uncomment for 3D Ant Boy guide in future
+// import { lazy, Suspense } from 'react';
+// const AntBoyGuide = lazy(() => 
+//   import('../three/AntBoyGuide').then(module => ({ default: module.AntBoyGuide }))
+// );
+
 const Contact = () => {
   const contactMethods = [
     // {
@@ -281,10 +287,17 @@ const Contact = () => {
           <Card className="max-w-2xl mx-auto p-8 border-dashed border-2 border-[var(--border)]">
             <div className="text-3xl mb-4">📝</div>
             <h3 className="text-lg font-semibold text-[var(--text-h)] mb-2">Fastest way to connect</h3>
-            <p className="text-[var(--text)] text-sm">Email or phone reaches me fastest for interviews and project discussions.</p>
+            <p className="text-[var(--text)] text-sm">Email reaches me fastest for interviews and project discussions.</p>
           </Card>
         </motion.div>
       </div>
+
+      {/* Floating Ant Boy Guide - Peeks from bottom right */}
+      {/* TODO: Enable 3D guide in future
+      <Suspense fallback={null}>
+        <AntBoyGuide position="right" height="h-96" />
+      </Suspense>
+      */}
     </section>
   );
 };

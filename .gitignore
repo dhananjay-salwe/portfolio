@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Large binary files and 3D models
+public/models/
+*.glb
+*.gltf
+
+# Documentation files (kept locally, not tracked)
+*.md
+!README.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,4 +1,35 @@
 User-agent: *
 Allow: /
+Disallow: /node_modules/
+Disallow: /.git/
+Disallow: /dist/
+Disallow: /.venv/
 
-Sitemap: https://dhananjaysalwe.dev/sitemap.xml
+# Crawl Delay & Request Rate
+Crawl-delay: 1
+
+# Sitemaps - UPDATE THIS DOMAIN WHEN MIGRATING TO CUSTOM DOMAIN
+Sitemap: https://dhananjaysalwe.vercel.app/sitemap.xml
+
+# Google Search Console & Bing Webmaster Tools verification
+# Add verification tokens here when setting up search console
+
+# Allow specific bots
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0.5
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Block bad bots if needed (optional)
+User-agent: MJ12bot
+Allow: /
+
+# AhrefsBot, SemrushBot are allowed for SEO tools
+User-agent: AhrefsBot
+Allow: /
+
+User-agent: SemrushBot
+Allow: /
