@@ -1,48 +1,33 @@
 import { motion } from 'framer-motion';
+import { useEffect, useMemo, useState } from 'react';
 import Button from '../ui/Button';
 import resumePdf from '../../assets/resume.pdf';
 
+const ROTATING_TITLES = [
+  'Full Stack Developer',
+  'Java Developer',
+  'Front End Developer',
+  'Computer Vision',
+  'AI',
+  'Cyber Security'
+];
+
+const TYPE_START_DELAY_MS = 300;
+const TYPE_SPEED_MS = 20;
+const DELETE_SPEED_MS = 16;
+const TITLE_READ_PAUSE_MS = 2000;
+const CURSOR_PHASE_PAUSE_MS = 300;
+const CURSOR_BLINK_MS = 430;
+
 const Hero = () => {
-  const highlights = [
-    // 'Trainee Software Developer at aPLS Web Development',
-    // 'Built systems serving 200+ users',
-    // '15-30 FPS face recognition with anti-spoofing'
-  ];
+  const [typedTitle, setTypedTitle] = useState('');
+  const [titlePhase, setTitlePhase] = useState('idle');
+  const [titleIndex, setTitleIndex] = useState(0);
+  const [showBio, setShowBio] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const [isCursorVisible, setIsCursorVisible] = useState(true);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.3,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 60 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        ease: "easeOut"
-      }
-    }
-  };
-
-  const buttonVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    }
-  };
+  const currentTitle = useMemo(() => ROTATING_TITLES[titleIndex], [titleIndex]);
 
   const socialLinks = [
     {
@@ -78,6 +63,83 @@ const Hero = () => {
     document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  useEffect(() => {
+    const startTimer = window.setTimeout(() => {
+      setTitlePhase('typing');
+    }, TYPE_START_DELAY_MS);
+
+    return () => window.clearTimeout(startTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!showBio) {
+      return undefined;
+    }
+
+    const actionsTimer = window.setTimeout(() => {
+      setShowActions(true);
+    }, 200);
+
+    return () => window.clearTimeout(actionsTimer);
+  }, [showBio]);
+
+  useEffect(() => {
+    if (titlePhase === 'idle') {
+      return undefined;
+    }
+
+    const cursorTimer = window.setInterval(() => {
+      setIsCursorVisible((previous) => !previous);
+    }, CURSOR_BLINK_MS);
+
+    return () => window.clearInterval(cursorTimer);
+  }, [titlePhase]);
+
+  useEffect(() => {
+    if (titlePhase === 'idle') {
+      return undefined;
+    }
+
+    let phaseTimer;
+
+    if (titlePhase === 'typing') {
+      if (typedTitle.length < currentTitle.length) {
+        phaseTimer = window.setTimeout(() => {
+          setTypedTitle(currentTitle.slice(0, typedTitle.length + 1));
+        }, TYPE_SPEED_MS);
+      } else {
+        phaseTimer = window.setTimeout(() => {
+          if (!showBio && titleIndex === 0) {
+            setShowBio(true);
+          }
+
+          setTitlePhase('hold');
+        }, 0);
+      }
+    }
+
+    if (titlePhase === 'hold') {
+      phaseTimer = window.setTimeout(() => {
+        setTitlePhase('deleting');
+      }, TITLE_READ_PAUSE_MS);
+    }
+
+    if (titlePhase === 'deleting') {
+      if (typedTitle.length > 0) {
+        phaseTimer = window.setTimeout(() => {
+          setTypedTitle(currentTitle.slice(0, typedTitle.length - 1));
+        }, DELETE_SPEED_MS);
+      } else {
+        phaseTimer = window.setTimeout(() => {
+          setTitleIndex((previous) => (previous + 1) % ROTATING_TITLES.length);
+          setTitlePhase('typing');
+        }, CURSOR_PHASE_PAUSE_MS);
+      }
+    }
+
+    return () => window.clearTimeout(phaseTimer);
+  }, [currentTitle, showBio, titleIndex, titlePhase, typedTitle.length]);
+
   return (
     <section id="home" className="min-h-screen flex items-center justify-center relative overflow-hidden">
       {/* Background Elements */}
@@ -111,12 +173,17 @@ const Hero = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
         <motion.div
           className="text-center max-w-4xl mx-auto"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
         >
           {/* Greeting */}
-          <motion.div variants={itemVariants} className="mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0, duration: 0.16, ease: 'easeOut' }}
+            className="mb-4"
+          >
             <span className="inline-block px-4 py-2 bg-[var(--accent-bg)] text-[var(--accent)] rounded-full text-sm font-medium border border-[var(--accent-border)]">
               👋 Hello, I'm
             </span>
@@ -124,106 +191,121 @@ const Hero = () => {
 
           {/* Name */}
           <motion.h1
-            variants={itemVariants}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08, duration: 0.2, ease: 'easeOut' }}
             className="text-5xl md:text-7xl lg:text-8xl font-bold text-[var(--text-h)] mb-6"
           >
             Dhananjay
             <span className="block text-[var(--accent)]">Salwe</span>
           </motion.h1>
 
-          {/* Title */}
-          <motion.h2
-            variants={itemVariants}
-            className="text-2xl md:text-3xl lg:text-4xl font-semibold text-[var(--text)] mb-6"
+          {/* Rotating Title */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{
+              opacity: titlePhase === 'idle' ? 0 : 1,
+              y: titlePhase === 'idle' ? 8 : 0
+            }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="mb-6 min-h-[3.2rem] sm:min-h-[4.2rem] flex items-center justify-center"
           >
-            Full Stack Developer
-          </motion.h2>
+            <h2 className="text-[clamp(1.45rem,7vw,2.5rem)] font-semibold text-[var(--text)] leading-tight max-w-3xl mx-auto">
+              <span className="break-words">{typedTitle}</span>
+              <span
+                aria-hidden="true"
+                className="inline-block ml-1 w-3 text-left text-[var(--accent)]"
+              >
+                {isCursorVisible ? '|' : ' '}
+              </span>
+            </h2>
+          </motion.div>
 
           {/* Tagline */}
-          <motion.p
-            variants={itemVariants}
-            className="text-lg md:text-xl text-[var(--text)] max-w-3xl mx-auto leading-relaxed mb-8"
-          >
-            Motivated full stack developer with hands-on experience in Java (Spring Boot),
-            Python (Flask, Django, FastAPI), PHP (Laravel), React.js, and Angular.
-            I build clean, production-ready applications with measurable business impact.
-          </motion.p>
-
-          <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-3 mb-10">
-            {highlights.map((item) => (
-              <span
-                key={item}
-                className="px-4 py-2 rounded-full bg-[var(--bg)]/70 border border-[var(--accent-border)] text-sm text-[var(--text-h)]"
-              >
-                {item}
-              </span>
-            ))}
-          </motion.div>
-
-          {/* Action Buttons */}
-          <motion.div
-            variants={buttonVariants}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
-          >
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handleViewJourney}
-              className="w-full sm:w-auto"
+          {showBio && (
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, ease: 'easeOut' }}
+              className="text-lg md:text-xl text-[var(--text)] max-w-3xl mx-auto leading-relaxed mb-8"
             >
-              Explore My Journey
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Button>
+              Motivated full stack developer with hands-on experience in Java (Spring Boot),
+              Python (Flask, Django, FastAPI), PHP (Laravel), React.js, and Angular.
+              I build clean, production-ready applications with measurable business impact.
+            </motion.p>
+          )}
 
-            <Button
-              variant="outline"
-              size="lg"
-              href={resumePdf}
-              target="_blank"
-              className="w-full sm:w-auto"
-            >
-              Download Resume
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </Button>
-          </motion.div>
-
-          {/* Social Links */}
-          <motion.div
-            variants={containerVariants}
-            className="flex items-center justify-center space-x-4"
-          >
-            {socialLinks.map((social) => (
-              <motion.a
-                key={social.name}
-                href={social.url}
-                target={social.url.startsWith('mailto:') ? '_self' : '_blank'}
-                rel={social.url.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
-                className="p-3 text-[var(--text)] hover:text-[var(--accent)] hover:bg-[var(--code-bg)] rounded-lg transition-all duration-200 group"
-                variants={buttonVariants}
-                whileHover={{ scale: 1.1, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                title={social.name}
+          {showActions && (
+            <>
+              {/* Action Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+                className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
               >
-                <motion.div
-                  whileHover={{ rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={handleViewJourney}
+                  className="w-full sm:w-auto flex-col gap-1"
                 >
-                  {social.icon}
-                </motion.div>
-              </motion.a>
-            ))}
-          </motion.div>
+                  Explore My Journey
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="lg"
+                  href={resumePdf}
+                  target="_blank"
+                  className="w-full sm:w-auto flex-col gap-1"
+                >
+                  Download Resume
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </Button>
+              </motion.div>
+
+              {/* Social Links */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+                className="flex items-center justify-center space-x-4"
+              >
+                {socialLinks.map((social) => (
+                  <motion.a
+                    key={social.name}
+                    href={social.url}
+                    target={social.url.startsWith('mailto:') ? '_self' : '_blank'}
+                    rel={social.url.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+                    className="p-3 text-[var(--text)] hover:text-[var(--accent)] hover:bg-[var(--code-bg)] rounded-lg transition-all duration-200 group"
+                    whileHover={{ scale: 1.06, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    title={social.name}
+                  >
+                    <motion.div
+                      whileHover={{ rotate: 5 }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                    >
+                      {social.icon}
+                    </motion.div>
+                  </motion.a>
+                ))}
+              </motion.div>
+            </>
+          )}
 
           {/* Scroll Indicator */}
           <motion.div
             className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2, duration: 1 }}
+            animate={{ opacity: showActions ? 1 : 0 }}
+            transition={{ delay: showActions ? 0.3 : 0, duration: 0.35 }}
           >
             <motion.div
               className="flex flex-col items-center space-y-2 text-[var(--text)] cursor-pointer"

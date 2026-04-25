@@ -1,16 +1,76 @@
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import resumePdf from '../../assets/resume.pdf';
 
-const About = () => {
-  const stats = [
-    { value: '1+', label: 'Year Experience', icon: '💼' },
-    { value: '200+', label: 'Users Served', icon: '👥' },
-    { value: '15-30 FPS', label: 'Face Recognition Speed', icon: '🎯' },
-    { value: '85%', label: 'Resume Match Accuracy', icon: '📄' }
-  ];
+const SECTION_HEADER_VIEWPORT = { once: true, margin: '0px 0px -33% 0px' };
 
+const stats = [
+  { value: 1, suffix: '+', label: 'Year Experience', icon: '💼', type: 'single' },
+  { value: 200, suffix: '+', label: 'Users Served', icon: '👥', type: 'single' },
+  { from: 15, to: 30, suffix: ' FPS', label: 'Face Recognition Speed', icon: '🎯', type: 'range' },
+  { value: 85, suffix: '%', label: 'Resume Match Accuracy', icon: '📄', type: 'single' }
+];
+
+const AnimatedStatValue = ({ stat, start }) => {
+  const [displayValue, setDisplayValue] = useState(() => {
+    if (stat.type === 'range') {
+      return { from: 0, to: 0 };
+    }
+
+    return 0;
+  });
+
+  useEffect(() => {
+    if (!start) {
+      return undefined;
+    }
+
+    const durationMs = 850;
+    const startTime = performance.now();
+    let frameId;
+
+    const tick = (timestamp) => {
+      const progress = Math.min((timestamp - startTime) / durationMs, 1);
+
+      if (stat.type === 'range') {
+        setDisplayValue({
+          from: Math.round(stat.from * progress),
+          to: Math.round(stat.to * progress)
+        });
+      } else {
+        setDisplayValue(Math.round(stat.value * progress));
+      }
+
+      if (progress < 1) {
+        frameId = window.requestAnimationFrame(tick);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [start, stat.from, stat.to, stat.type, stat.value]);
+
+  if (stat.type === 'range') {
+    return (
+      <>
+        {displayValue.from}-{displayValue.to}
+        {stat.suffix}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {displayValue}
+      {stat.suffix}
+    </>
+  );
+};
+
+const About = () => {
   const interests = [
     { name: 'Full Stack Development', icon: '💻', description: 'Building complete web applications' },
     { name: 'API Engineering', icon: '⚡', description: 'Designing secure and scalable REST APIs' },
@@ -30,13 +90,13 @@ const About = () => {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 60 },
+    hidden: { opacity: 0, y: 26 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.8,
-        ease: "easeOut"
+        duration: 0.55,
+        ease: 'easeOut'
       }
     }
   };
@@ -47,36 +107,42 @@ const About = () => {
       opacity: 1,
       scale: 1,
       transition: {
-        duration: 0.6,
-        ease: "easeOut"
+        duration: 0.45,
+        ease: 'easeOut'
       }
     }
   };
 
+  const statsTriggerRef = useRef(null);
+  const statsInView = useInView(statsTriggerRef, {
+    once: true,
+    margin: '0px 0px -33% 0px'
+  });
+
   return (
-    <section id="about" className="py-20">
+    <section id="about" className="py-16 sm:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 60 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="text-center mb-16"
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          viewport={SECTION_HEADER_VIEWPORT}
+          className="text-center mb-12 sm:mb-16"
         >
           <div className="inline-block px-4 py-2 bg-[var(--accent-bg)] text-[var(--accent)] rounded-full text-sm font-medium border border-[var(--accent-border)] mb-4">
             👤 About Me
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-[var(--text-h)] mb-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--text-h)] mb-5 sm:mb-6">
             Get to Know Me
           </h2>
-          <p className="text-lg text-[var(--text)] max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-[var(--text)] max-w-3xl mx-auto leading-relaxed">
             A recent B.Tech graduate and full stack developer shipping production-ready
             web apps across Java, Python, PHP, React, and Angular ecosystems.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-start">
           {/* Left Column - Main Content */}
           <motion.div
             variants={containerVariants}
@@ -87,8 +153,8 @@ const About = () => {
           >
             {/* Professional Summary */}
             <motion.div variants={itemVariants}>
-              <Card className="p-8">
-                <h3 className="text-2xl font-bold text-[var(--text-h)] mb-6">
+              <Card className="p-5 sm:p-8">
+                <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-h)] mb-5 sm:mb-6">
                   My Story
                 </h3>
                 <div className="space-y-4 text-[var(--text)] leading-relaxed">
@@ -114,7 +180,7 @@ const About = () => {
 
             {/* Interests & Passions */}
             <motion.div variants={itemVariants}>
-              <h3 className="text-xl font-bold text-[var(--text-h)] mb-6">
+              <h3 className="text-lg sm:text-xl font-bold text-[var(--text-h)] mb-5 sm:mb-6">
                 What I'm Passionate About
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -123,10 +189,15 @@ const About = () => {
                     key={interest.name}
                     initial={{ opacity: 0, scale: 0.9 }}
                     whileInView={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    transition={{ duration: 0.35, delay: index * 0.08 }}
                     viewport={{ once: true }}
+                    whileHover={{ y: -4 }}
                   >
-                    <Card hover={true} padding="md" className="group h-full">
+                    <Card
+                      hover={false}
+                      padding="md"
+                      className="group h-full transition-all duration-300 hover:shadow-[var(--shadow)] hover:border-[var(--accent-border)]"
+                    >
                       <div className="text-2xl mb-2">{interest.icon}</div>
                       <h4 className="font-semibold text-[var(--text-h)] group-hover:text-[var(--accent)] transition-colors duration-200 mb-1">
                         {interest.name}
@@ -142,7 +213,7 @@ const About = () => {
 
             {/* Call to Action */}
             <motion.div variants={itemVariants}>
-              <Card className="bg-gradient-to-br from-[var(--accent-bg)] to-[var(--social-bg)] border-[var(--accent-border)] text-center p-8">
+              <Card className="bg-gradient-to-br from-[var(--accent-bg)] to-[var(--social-bg)] border-[var(--accent-border)] text-center p-6 sm:p-8">
                 <div className="text-3xl mb-4">🤝</div>
                 <h3 className="text-xl font-semibold text-[var(--text-h)] mb-3">
                   Let's Work Together
@@ -189,11 +260,11 @@ const About = () => {
             className="space-y-8"
           >
             {/* Statistics */}
-            <motion.div variants={itemVariants}>
-              <h3 className="text-xl font-bold text-[var(--text-h)] mb-6">
+            <motion.div variants={itemVariants} ref={statsTriggerRef}>
+              <h3 className="text-lg sm:text-xl font-bold text-[var(--text-h)] mb-5 sm:mb-6">
                 By the Numbers
               </h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {stats.map((stat) => (
                   <motion.div
                     key={stat.label}
@@ -204,7 +275,7 @@ const About = () => {
                     <Card hover={true} className="text-center group-hover:bg-[var(--accent-bg)] transition-colors duration-200">
                       <div className="text-2xl mb-2">{stat.icon}</div>
                       <div className="text-2xl font-bold text-[var(--accent)] mb-1">
-                        {stat.value}
+                        <AnimatedStatValue stat={stat} start={statsInView} />
                       </div>
                       <div className="text-sm text-[var(--text)] font-medium">
                         {stat.label}
@@ -217,36 +288,36 @@ const About = () => {
 
             {/* Quick Facts */}
             <motion.div variants={itemVariants}>
-              <Card className="p-6">
+              <Card className="p-5 sm:p-6">
                 <h3 className="text-lg font-bold text-[var(--text-h)] mb-6">
                   Quick Facts
                 </h3>
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-[var(--accent)] rounded-full flex-shrink-0"></div>
                     <span className="text-[var(--text)]">
                       <strong className="text-[var(--text-h)]">Location:</strong> Nashik, Maharashtra, India
                     </span>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-[var(--accent)] rounded-full flex-shrink-0"></div>
                     <span className="text-[var(--text)]">
                       <strong className="text-[var(--text-h)]">Degree:</strong> B.Tech in CSE (Cyber Security and Forensics), Sandip University - GPA 9.00/10.0
                     </span>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-[var(--accent)] rounded-full flex-shrink-0"></div>
                     <span className="text-[var(--text)]">
                       <strong className="text-[var(--text-h)]">Diploma:</strong> Information Technology, Sandip Foundation (2019-2022)
                     </span>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-[var(--accent)] rounded-full flex-shrink-0"></div>
                     <span className="text-[var(--text)]">
                       <strong className="text-[var(--text-h)]">Currently:</strong> Trainee Software Developer at aPLS Web Development
                     </span>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-[var(--accent)] rounded-full flex-shrink-0"></div>
                     <span className="text-[var(--text)]">
                       <strong className="text-[var(--text-h)]">Languages:</strong> English, Marathi, Hindi
@@ -258,7 +329,7 @@ const About = () => {
 
             {/* Availability Status */}
             <motion.div variants={itemVariants}>
-              <Card className="border-green-300 bg-green-50/50 dark:bg-green-900/20 dark:border-green-700 p-6">
+              <Card className="border-green-300 bg-green-50/50 dark:bg-green-900/20 dark:border-green-700 p-5 sm:p-6">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="font-semibold text-green-800 dark:text-green-300">

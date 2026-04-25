@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 
+const SECTION_HEADER_VIEWPORT = { once: true, margin: '0px 0px -33% 0px' };
+
 // TODO: Uncomment for 3D Ant Boy guide in future
 // import { lazy, Suspense } from 'react';
 // const AntBoyGuide = lazy(() => 
@@ -110,7 +112,10 @@ const Contact = () => {
 
   const ContactMethodCard = ({ method }) => {
     const CardContent = (
-      <Card hover={!!method.link} className="h-full text-center group cursor-pointer">
+      <Card
+        hover={!!method.link}
+        className="h-full text-center group cursor-pointer transition-all duration-300 hover:shadow-[0_0_0_1px_var(--accent-border),0_0_26px_var(--accent-bg)]"
+      >
         <div className="text-[var(--accent)] mb-4 flex justify-center">
           <motion.div
             whileHover={{ scale: 1.1, rotate: 5 }}
@@ -157,23 +162,23 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="py-24">
+    <section id="contact" className="py-16 sm:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 60 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="text-center mb-16"
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          viewport={SECTION_HEADER_VIEWPORT}
+          className="text-center mb-12 sm:mb-16"
         >
           <div className="inline-block px-4 py-2 bg-[var(--accent-bg)] text-[var(--accent)] rounded-full text-sm font-medium border border-[var(--accent-border)] mb-4">
             📬 Get In Touch
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-[var(--text-h)] mb-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--text-h)] mb-5 sm:mb-6">
             Let's Connect
           </h2>
-          <p className="text-lg text-[var(--text)] max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-[var(--text)] max-w-3xl mx-auto leading-relaxed">
             If you have a role, project, or collaboration in mind, I would love to connect.
             I usually respond within 24 hours.
           </p>
@@ -185,7 +190,7 @@ const Contact = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-16"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 sm:mb-16"
         >
           {contactMethods.map((method) => (
             <ContactMethodCard
@@ -203,7 +208,7 @@ const Contact = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="max-w-4xl mx-auto"
         >
-          <Card className="text-center bg-gradient-to-br from-[var(--accent-bg)] to-[var(--social-bg)] border-[var(--accent-border)] p-8 lg:p-12">
+          <Card className="text-center bg-gradient-to-br from-[var(--accent-bg)] to-[var(--social-bg)] border-[var(--accent-border)] p-6 sm:p-8 lg:p-12">
             <motion.div
               className="text-5xl mb-6"
               animate={{
@@ -219,11 +224,11 @@ const Contact = () => {
               👋
             </motion.div>
 
-            <h3 className="text-3xl font-bold text-[var(--text-h)] mb-4">
+            <h3 className="text-2xl sm:text-3xl font-bold text-[var(--text-h)] mb-4">
               Ready to Build Something Impactful?
             </h3>
 
-            <p className="text-lg text-[var(--text)] mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-[var(--text)] mb-7 sm:mb-8 max-w-2xl mx-auto">
               I am actively seeking opportunities where I can contribute as a full stack developer,
               grow with a strong engineering team, and deliver measurable product outcomes.
             </p>
@@ -262,7 +267,7 @@ const Contact = () => {
               <p className="text-sm text-[var(--text)]/70 mb-4">
                 Usually responds within 24 hours
               </p>
-              <div className="flex items-center justify-center space-x-4 text-xs text-[var(--text)]/60">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs text-[var(--text)]/60">
                 <div className="flex items-center space-x-1">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span>Open to new opportunities</span>
@@ -282,9 +287,9 @@ const Contact = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           viewport={{ once: true }}
-          className="mt-16 text-center"
+          className="mt-12 sm:mt-16 text-center"
         >
-          <Card className="max-w-2xl mx-auto p-8 border-dashed border-2 border-[var(--border)]">
+          <Card className="max-w-2xl mx-auto p-6 sm:p-8 border-dashed border-2 border-[var(--border)]">
             <div className="text-3xl mb-4">📝</div>
             <h3 className="text-lg font-semibold text-[var(--text-h)] mb-2">Fastest way to connect</h3>
             <p className="text-[var(--text)] text-sm">Email reaches me fastest for interviews and project discussions.</p>

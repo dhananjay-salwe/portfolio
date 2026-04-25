@@ -44,10 +44,10 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-[var(--code-bg)] border-t border-[var(--border)]">
+    <footer className="bg-[var(--code-bg)] border-t border-[var(--border)] overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
-        <div className="py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="py-10 sm:py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Brand Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -56,15 +56,15 @@ const Footer = () => {
             viewport={{ once: true }}
             className="space-y-4"
           >
-            <div className="text-2xl font-bold text-[var(--text-h)]">
+            <div className="text-[1.9rem] sm:text-2xl font-bold text-[var(--text-h)] leading-tight">
               Dhananjay Salwe
               <span className="text-[var(--accent)]">.</span>
             </div>
-            <p className="text-[var(--text)] text-sm max-w-md">
+            <p className="text-[var(--text)] text-sm max-w-md leading-relaxed break-words">
               Full Stack Developer building production-ready applications with Java,
               Python, PHP, React, and Angular. Focused on measurable outcomes and clean engineering.
             </p>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center flex-wrap gap-1">
               {socialLinks.map((social, index) => (
                 <motion.a
                   key={social.name}
@@ -95,7 +95,7 @@ const Footer = () => {
             className="space-y-4"
           >
             <h3 className="text-lg font-semibold text-[var(--text-h)]">Quick Links</h3>
-            <nav className="space-y-2">
+            <nav className="grid grid-cols-2 gap-x-4 gap-y-2 sm:block sm:space-y-2">
               {quickLinks.map((link) => (
                 <a
                   key={link.name}
@@ -120,12 +120,12 @@ const Footer = () => {
             <div className="space-y-3">
               <a
                 href="mailto:salwedhananjay01@gmail.com"
-                className="flex items-center space-x-3 text-[var(--text)] hover:text-[var(--accent)] transition-colors duration-200 text-sm"
+                className="flex items-start space-x-3 text-[var(--text)] hover:text-[var(--accent)] transition-colors duration-200 text-sm min-w-0"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span>salwedhananjay01@gmail.com</span>
+                <span className="break-all">salwedhananjay01@gmail.com</span>
               </a>
               {/* <div className="flex items-center space-x-3 text-[var(--text)] text-sm">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +161,7 @@ const Footer = () => {
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.6 }}
           viewport={{ once: true }}
-          className="py-6 border-t border-[var(--border)] space-y-4"
+          className="py-5 sm:py-6 border-t border-[var(--border)] space-y-4"
         >
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
             <p className="text-[var(--text)] text-sm text-center sm:text-left">
@@ -170,21 +170,21 @@ const Footer = () => {
           </div>
           
           {/* Policy Links */}
-          <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-sm text-[var(--text)]">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-center sm:items-start justify-center sm:justify-start gap-2 sm:gap-4 text-sm text-[var(--text)]">
             <a 
               href="/#privacy-policy" 
               className="hover:text-[var(--accent)] hover:underline transition-colors"
             >
               Privacy Policy
             </a>
-            <span className="text-[var(--border)]">•</span>
+            <span className="hidden sm:inline text-[var(--border)]">•</span>
             <a 
               href="/#cookie-policy" 
               className="hover:text-[var(--accent)] hover:underline transition-colors"
             >
               Cookie Policy
             </a>
-            <span className="text-[var(--border)]">•</span>
+            <span className="hidden sm:inline text-[var(--border)]">•</span>
             <a 
               href="mailto:salwedhananjay01@gmail.com" 
               className="hover:text-[var(--accent)] hover:underline transition-colors"

@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { featuredProjects } from '../../data/projects';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
+
+const SECTION_HEADER_VIEWPORT = { once: true, margin: '0px 0px -33% 0px' };
 
 const Projects = () => {
   const [showAllProjects, setShowAllProjects] = useState(false);
@@ -30,35 +32,62 @@ const Projects = () => {
   };
 
   const cardVariants = {
-    hidden: { opacity: 0, y: 60 },
+    hidden: { opacity: 0, y: 22 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.8,
-        ease: "easeOut"
+        duration: 0.45,
+        ease: 'easeOut'
       }
     }
   };
 
   const ProjectCard = ({ project }) => {
     const [imageError, setImageError] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+    useEffect(() => {
+      const mediaQuery = window.matchMedia('(hover: none), (pointer: coarse)');
+      const syncTouchMode = () => setIsTouchDevice(mediaQuery.matches);
+
+      syncTouchMode();
+
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', syncTouchMode);
+      } else {
+        mediaQuery.addListener(syncTouchMode);
+      }
+
+      return () => {
+        if (mediaQuery.removeEventListener) {
+          mediaQuery.removeEventListener('change', syncTouchMode);
+        } else {
+          mediaQuery.removeListener(syncTouchMode);
+        }
+      };
+    }, []);
 
     return (
     <motion.div
       variants={cardVariants}
       className="group"
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
     >
       <Card hover={true} className="h-full flex flex-col overflow-hidden">
         {/* Project Image */}
-        <div className="relative h-48 bg-gradient-to-br from-[var(--accent-bg)] to-[var(--social-bg)] rounded-lg mb-6 overflow-hidden">
+        <div className="relative h-40 sm:h-48 bg-gradient-to-br from-[var(--accent-bg)] to-[var(--social-bg)] rounded-lg mb-5 sm:mb-6 overflow-hidden">
           {!imageError && project.image ? (
-            <img
+            <motion.img
               src={project.image}
               alt={`${project.title} preview`}
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
               onError={() => setImageError(true)}
+              animate={{ scale: isTouchDevice ? 1 : isHovered ? 1.03 : 1 }}
+              transition={{ duration: 0.95, ease: 'easeOut' }}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -93,13 +122,13 @@ const Projects = () => {
         <div className="flex-grow">
           <Card.Header>
             <Card.Subtitle>{project.subtitle}</Card.Subtitle>
-            <Card.Title className="group-hover:text-[var(--accent)] transition-colors duration-200">
+            <Card.Title className="text-lg sm:text-xl group-hover:text-[var(--accent)] transition-colors duration-200">
               {project.title}
             </Card.Title>
           </Card.Header>
 
           <Card.Content>
-            <Card.Description className="mb-4">
+            <Card.Description className="mb-4 text-sm sm:text-base">
               {project.description}
             </Card.Description>
 
@@ -120,7 +149,20 @@ const Projects = () => {
               <h4 className="text-sm font-medium text-[var(--text-h)] mb-2">Tech Stack</h4>
               <div className="flex flex-wrap gap-1.5">
                 {project.tech.map((tech, techIndex) => (
-                  <Badge.Tech key={techIndex} tech={tech} />
+                  <motion.div
+                    key={techIndex}
+                    initial={false}
+                    animate={{
+                      opacity: isTouchDevice ? 1 : isHovered ? 1 : 0.52,
+                      y: isTouchDevice ? 0 : isHovered ? 0 : 5
+                    }}
+                    transition={{
+                      duration: 0.18,
+                      delay: !isTouchDevice && isHovered ? techIndex * 0.045 : 0
+                    }}
+                  >
+                    <Badge.Tech tech={tech} animated={false} />
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -166,23 +208,23 @@ const Projects = () => {
   };
 
   return (
-    <section id="projects" className="py-24 relative z-20">
+    <section id="projects" className="py-16 sm:py-24 relative z-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 60 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="text-center mb-16"
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          viewport={SECTION_HEADER_VIEWPORT}
+          className="text-center mb-12 sm:mb-16"
         >
           <div className="inline-block px-4 py-2 bg-[var(--accent-bg)] text-[var(--accent)] rounded-full text-sm font-medium border border-[var(--accent-border)] mb-4">
             💼 Portfolio
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-[var(--text-h)] mb-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--text-h)] mb-5 sm:mb-6">
             Featured Projects
           </h2>
-          <p className="text-lg text-[var(--text)] max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg text-[var(--text)] max-w-3xl mx-auto leading-relaxed">
             Selected projects from production, internship, and academic work across full-stack,
             SaaS, and AI/computer-vision use cases.
           </p>
@@ -192,8 +234,9 @@ const Projects = () => {
         <motion.div
           variants={containerVariants}
           initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-12"
+          whileInView="visible"
+          viewport={{ once: true, margin: '0px 0px -20% 0px' }}
+          className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 mb-10 sm:mb-12"
         >
           {visibleProjects.map((project) => (
             <ProjectCard

@@ -10,7 +10,7 @@ const Layout = ({ children }) => {
         <div className="parallax-grid" />
       </div>
       <Header />
-      <main className="flex-grow relative z-10">
+      <main className="flex-grow relative z-10 pt-16 md:pt-20">
         {children}
       </main>
       <Footer />

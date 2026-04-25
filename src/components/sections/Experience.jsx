@@ -3,6 +3,8 @@ import { workExperience, education, certifications } from '../../data/experience
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 
+const SECTION_HEADER_VIEWPORT = { once: true, margin: '0px 0px -33% 0px' };
+
 const Experience = () => {
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -208,10 +210,10 @@ const Experience = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 60 }}
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          viewport={SECTION_HEADER_VIEWPORT}
           className="text-center mb-16"
         >
           <div className="inline-block px-4 py-2 bg-[var(--accent-bg)] text-[var(--accent)] rounded-full text-sm font-medium border border-[var(--accent-border)] mb-4">

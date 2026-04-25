@@ -53,7 +53,7 @@ export const featuredProjects = [
     tech: ['Flask', 'Python 3.8', 'ONNXRuntime', 'OpenCV', 'MediaPipe', 'Gunicorn', 'MySQL', 'Nginx'],
     image: '/face-recognition-1.png',
     github: null,
-    live: null,
+    live: 'https://face-recognition-hv19.onrender.com/register',
     impact: 'Delivered real-time liveness and anti-spoofing at 15-30 FPS with hardened production deployment.',
     featured: true,
     category: 'AI/Computer Vision'
